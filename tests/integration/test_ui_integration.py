@@ -154,3 +154,90 @@ class TestConfigurationReload:
         """
         # This test will be implemented after T061-T063
         pass
+
+
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires Phase 7 implementation (T070-T071)")
+class TestHistoricalLeaderboardDisplay:
+    """Tests for historical task execution leaderboard display.
+
+    These tests will be enabled after implementing:
+    - T069: TaskRepository.get_task_history()
+    - T070: History list component
+    - T071: History page
+    """
+
+    def test_display_past_tasks_list(self) -> None:
+        """Test displaying list of past task executions.
+
+        Expected workflow:
+        1. Execute 3 different tasks
+        2. Navigate to history page
+        3. Verify all 3 tasks displayed in list
+        4. Verify each shows: task ID, prompt preview, timestamp, execution count
+        """
+        # This test will be implemented after T070-T071
+        pass
+
+    def test_select_task_shows_historical_leaderboard(self) -> None:
+        """Test selecting a past task displays its historical leaderboard.
+
+        Expected behavior:
+        1. Execute task with 3 agents (scores: 95, 80, 70)
+        2. Navigate to history page
+        3. Click on the task in history list
+        4. Verify leaderboard displays with correct scores and rankings
+        5. Verify data matches the historical execution results
+        """
+        # This test will be implemented after T070-T071
+        pass
+
+    def test_historical_leaderboard_shows_correct_data(self) -> None:
+        """Test that historical leaderboard shows accurate execution data.
+
+        Expected workflow:
+        1. Create past task with known execution results
+        2. Select task from history
+        3. Verify leaderboard shows:
+           - Correct model names
+           - Correct evaluation scores
+           - Correct duration and token counts
+           - Correct tool call information
+        """
+        # This test will be implemented after T070-T071
+        pass
+
+    def test_history_list_pagination_or_scrolling(self) -> None:
+        """Test browsing large number of historical tasks.
+
+        Expected behavior:
+        1. Create 50+ tasks
+        2. Navigate to history page
+        3. Verify all tasks accessible (via pagination or infinite scroll)
+        4. Verify performance is acceptable with large dataset
+        """
+        # This test will be implemented after T070-T071
+        pass
+
+    def test_history_list_ordered_by_newest_first(self) -> None:
+        """Test that history list shows newest tasks first.
+
+        Expected workflow:
+        1. Execute 3 tasks at different times
+        2. Navigate to history page
+        3. Verify tasks ordered by created_at descending
+        4. Verify most recent task appears at top of list
+        """
+        # This test will be implemented after T070-T071
+        pass
+
+    def test_empty_history_displays_helpful_message(self) -> None:
+        """Test that empty history shows user-friendly message.
+
+        Expected behavior:
+        1. Navigate to history page with no past executions
+        2. Verify displays message: "No task execution history yet"
+        3. Verify suggests executing a task to get started
+        """
+        # This test will be implemented after T070-T071
+        pass

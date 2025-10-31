@@ -379,3 +379,49 @@ class TaskRepository:
             )
 
         return metrics
+
+    def get_task_history(self) -> list[dict[str, object]]:
+        """Get all task submissions with execution summary.
+
+        Returns task history ordered by created_at descending (newest first).
+        Each task includes:
+        - id: Task ID
+        - prompt: Task prompt text
+        - submitted_at: Timestamp when task was submitted
+        - execution_count: Number of executions for this task
+        - highest_score: Highest evaluation score (None if no evaluations)
+
+        Returns:
+            List of dictionaries with task history data
+        """
+        conn = self.db.connect()
+
+        results = conn.execute(
+            """
+            SELECT
+                t.id,
+                t.prompt,
+                t.submitted_at,
+                COUNT(e.id) as execution_count,
+                MAX(ev.score) as highest_score
+            FROM task_submissions t
+            LEFT JOIN agent_executions e ON t.id = e.task_id
+            LEFT JOIN evaluation_results ev ON e.id = ev.execution_id
+            GROUP BY t.id, t.prompt, t.submitted_at
+            ORDER BY t.submitted_at DESC
+            """
+        ).fetchall()
+
+        history = []
+        for row in results:
+            history.append(
+                {
+                    "id": row[0],
+                    "prompt": row[1],
+                    "submitted_at": row[2],
+                    "execution_count": row[3],
+                    "highest_score": row[4],
+                }
+            )
+
+        return history

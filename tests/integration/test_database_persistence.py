@@ -151,3 +151,96 @@ class TestPerformanceMetricsAggregation:
         """
         # This test will be implemented after T054
         pass
+
+
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires Phase 7 implementation (T069)")
+class TestTaskHistoryQuery:
+    """Tests for task history query operations.
+
+    These tests will be enabled after implementing:
+    - T069: TaskRepository.get_task_history()
+    """
+
+    def test_get_task_history_returns_all_tasks(self, temp_db: DatabaseConnection) -> None:
+        """Test retrieving all task submissions from history.
+
+        Expected workflow:
+        1. Create 3 task submissions with different prompts
+        2. Query task history
+        3. Verify returns list of 3 tasks
+        4. Verify each task has id, prompt, created_at
+        """
+        # This test will be implemented after T069
+        pass
+
+    def test_get_task_history_ordered_by_created_at_desc(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that task history is ordered by created_at descending (newest first).
+
+        Expected behavior:
+        1. Create 3 tasks with different timestamps:
+           - Task A: 2024-01-01 10:00:00
+           - Task B: 2024-01-01 12:00:00
+           - Task C: 2024-01-01 11:00:00
+        2. Query task history
+        3. Verify order is [B, C, A] (newest first)
+        """
+        # This test will be implemented after T069
+        pass
+
+    def test_get_task_history_includes_execution_counts(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that task history includes execution counts per task.
+
+        Expected workflow:
+        1. Create task A with 3 executions (2 completed, 1 running)
+        2. Create task B with 2 executions (both completed)
+        3. Create task C with 0 executions
+        4. Query task history
+        5. Verify execution counts: A=3, B=2, C=0
+        """
+        # This test will be implemented after T069
+        pass
+
+    def test_get_task_history_includes_evaluation_scores(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that task history includes evaluation score summary.
+
+        Expected behavior:
+        1. Create task with 3 executions:
+           - Execution 1: score 95 (winner)
+           - Execution 2: score 80
+           - Execution 3: score 70
+        2. Query task history
+        3. Verify task includes highest score (95) or score range
+        """
+        # This test will be implemented after T069
+        pass
+
+    def test_get_task_history_empty_database(self, temp_db: DatabaseConnection) -> None:
+        """Test task history returns empty list when no tasks exist.
+
+        Expected behavior:
+        1. Query task history on empty database
+        2. Verify returns empty list
+        """
+        # This test will be implemented after T069
+        pass
+
+    def test_get_task_history_includes_prompt_preview(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that task history includes prompt text.
+
+        Expected workflow:
+        1. Create task with long prompt (>100 chars)
+        2. Query task history
+        3. Verify prompt is included in result
+        4. Optionally: verify prompt is truncated if too long
+        """
+        # This test will be implemented after T069
+        pass

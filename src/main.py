@@ -11,6 +11,7 @@ from nicegui import ui
 
 from src.config.loader import ConfigLoader
 from src.database.connection import DatabaseConnection
+from src.ui.pages.history import create_history_page
 from src.ui.pages.main import create_main_page
 from src.ui.pages.performance import create_performance_page
 from src.ui.pages.settings import create_settings_page
@@ -140,6 +141,7 @@ def main() -> None:
         with ui.tabs().classes("w-full") as tabs:
             main_tab = ui.tab("Task Execution", icon="play_arrow")
             perf_tab = ui.tab("Performance", icon="bar_chart")
+            history_tab = ui.tab("History", icon="history")
             settings_tab = ui.tab("Settings", icon="settings")
 
         # Create tab panels
@@ -149,6 +151,9 @@ def main() -> None:
 
             with ui.tab_panel(perf_tab):
                 create_performance_page(config, db)
+
+            with ui.tab_panel(history_tab):
+                create_history_page(config, db)
 
             with ui.tab_panel(settings_tab):
                 create_settings_page(config, args.config, db)

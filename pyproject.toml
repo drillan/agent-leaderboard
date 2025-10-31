@@ -66,4 +66,5 @@ markers = [
     "unit: Unit tests (fast, no external dependencies)",
     "integration: Integration tests (moderate speed, may use mocks)",
     "e2e: End-to-end tests (slow, uses real dependencies)",
+    "external_api: Tests that require real API keys and make external API calls",
 ]

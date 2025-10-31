@@ -1,0 +1,586 @@
+"""Integration tests for agent execution workflow.
+
+Tests for database operations, execution lifecycle, and data persistence.
+"""
+
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
+from src.database.connection import DatabaseConnection
+from src.database.schema import SCHEMA_VERSION
+from src.models.evaluation import EvaluationResult
+from src.models.execution import AgentExecution, ExecutionStatus
+from src.models.task import TaskSubmission
+
+
+@pytest.fixture
+def temp_db() -> DatabaseConnection:
+    """Create a temporary database for testing.
+
+    Returns:
+        DatabaseConnection instance with initialized schema
+    """
+    with tempfile.NamedTemporaryFile(suffix=".duckdb", delete=False) as f:
+        db_path = f.name
+
+    # Delete the empty file created by NamedTemporaryFile
+    # DuckDB needs to create the file itself
+    Path(db_path).unlink()
+
+    db = DatabaseConnection(db_path)
+    db.initialize_schema()
+
+    yield db
+
+    # Cleanup
+    db.close()
+    Path(db_path).unlink(missing_ok=True)
+
+
+@pytest.mark.integration
+class TestDatabaseInitialization:
+    """Tests for database schema initialization."""
+
+    def test_schema_initialization(self, temp_db: DatabaseConnection) -> None:
+        """Test that schema is initialized correctly."""
+        conn = temp_db.connect()
+
+        # Check schema_metadata table exists and has version
+        result = conn.execute("SELECT version FROM schema_metadata").fetchone()
+        assert result is not None
+        assert result[0] == SCHEMA_VERSION
+
+    def test_task_submissions_table_exists(self, temp_db: DatabaseConnection) -> None:
+        """Test that task_submissions table exists."""
+        conn = temp_db.connect()
+        result = conn.execute(
+            "SELECT COUNT(*) FROM information_schema.tables "
+            "WHERE table_name = 'task_submissions'"
+        ).fetchone()
+        assert result[0] == 1
+
+    def test_agent_executions_table_exists(self, temp_db: DatabaseConnection) -> None:
+        """Test that agent_executions table exists."""
+        conn = temp_db.connect()
+        result = conn.execute(
+            "SELECT COUNT(*) FROM information_schema.tables "
+            "WHERE table_name = 'agent_executions'"
+        ).fetchone()
+        assert result[0] == 1
+
+    def test_evaluations_table_exists(self, temp_db: DatabaseConnection) -> None:
+        """Test that evaluations table exists."""
+        conn = temp_db.connect()
+        result = conn.execute(
+            "SELECT COUNT(*) FROM information_schema.tables "
+            "WHERE table_name = 'evaluations'"
+        ).fetchone()
+        assert result[0] == 1
+
+    def test_leaderboard_view_exists(self, temp_db: DatabaseConnection) -> None:
+        """Test that leaderboard_entries view exists."""
+        conn = temp_db.connect()
+        result = conn.execute(
+            "SELECT COUNT(*) FROM information_schema.views "
+            "WHERE table_name = 'leaderboard_entries'"
+        ).fetchone()
+        assert result[0] == 1
+
+
+@pytest.mark.integration
+class TestTaskSubmissionPersistence:
+    """Tests for task submission database operations."""
+
+    def test_insert_task_submission(self, temp_db: DatabaseConnection) -> None:
+        """Test inserting a task submission."""
+        conn = temp_db.connect()
+        task = TaskSubmission(prompt="Calculate factorial of 5")
+
+        # Insert task
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt, submitted_at) VALUES (?, ?) RETURNING id",
+            [task.prompt, task.submitted_at],
+        )
+        task_id = cursor.fetchone()[0]
+
+        assert task_id is not None
+        assert task_id > 0
+
+        # Verify insertion
+        result = conn.execute(
+            "SELECT prompt, submitted_at FROM task_submissions WHERE id = ?", [task_id]
+        ).fetchone()
+
+        assert result[0] == "Calculate factorial of 5"
+        assert isinstance(result[1], datetime)
+
+    def test_query_task_by_id(self, temp_db: DatabaseConnection) -> None:
+        """Test querying task by ID."""
+        conn = temp_db.connect()
+
+        # Insert task
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        # Query task
+        result = conn.execute(
+            "SELECT id, prompt FROM task_submissions WHERE id = ?", [task_id]
+        ).fetchone()
+
+        assert result[0] == task_id
+        assert result[1] == "Test task"
+
+    def test_empty_prompt_constraint(self, temp_db: DatabaseConnection) -> None:
+        """Test that empty prompt violates CHECK constraint."""
+        conn = temp_db.connect()
+
+        with pytest.raises(Exception):  # DuckDB constraint violation
+            conn.execute("INSERT INTO task_submissions (prompt) VALUES (?)", [""])
+
+
+@pytest.mark.integration
+class TestAgentExecutionPersistence:
+    """Tests for agent execution database operations."""
+
+    def test_insert_agent_execution(self, temp_db: DatabaseConnection) -> None:
+        """Test inserting an agent execution."""
+        conn = temp_db.connect()
+
+        # Create task first
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        # Create execution
+        execution = AgentExecution(
+            task_id=task_id, model_provider="openai", model_name="gpt-4o"
+        )
+
+        # Insert execution
+        cursor = conn.execute(
+            """
+            INSERT INTO agent_executions
+            (task_id, model_provider, model_name, status, started_at)
+            VALUES (?, ?, ?, ?, ?) RETURNING id
+            """,
+            [
+                execution.task_id,
+                execution.model_provider,
+                execution.model_name,
+                execution.status.value,
+                execution.started_at,
+            ],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        assert execution_id is not None
+        assert execution_id > 0
+
+        # Verify insertion
+        result = conn.execute(
+            "SELECT model_provider, model_name, status FROM agent_executions WHERE id = ?",
+            [execution_id],
+        ).fetchone()
+
+        assert result[0] == "openai"
+        assert result[1] == "gpt-4o"
+        assert result[2] == "running"
+
+    def test_update_execution_status(self, temp_db: DatabaseConnection) -> None:
+        """Test updating execution status to completed."""
+        conn = temp_db.connect()
+
+        # Create task and execution
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        execution = AgentExecution(
+            task_id=task_id, model_provider="openai", model_name="gpt-4o"
+        )
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status, started_at) "
+            "VALUES (?, ?, ?, ?, ?) RETURNING id",
+            [
+                execution.task_id,
+                execution.model_provider,
+                execution.model_name,
+                execution.status.value,
+                execution.started_at,
+            ],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        # Mark as completed
+        execution.mark_completed()
+
+        # Update database
+        conn.execute(
+            """
+            UPDATE agent_executions
+            SET status = ?, completed_at = ?, duration_seconds = ?
+            WHERE id = ?
+            """,
+            [
+                execution.status.value,
+                execution.completed_at,
+                execution.duration_seconds,
+                execution_id,
+            ],
+        )
+
+        # Verify update
+        result = conn.execute(
+            "SELECT status, completed_at, duration_seconds FROM agent_executions WHERE id = ?",
+            [execution_id],
+        ).fetchone()
+
+        assert result[0] == "completed"
+        assert result[1] is not None
+        assert result[2] is not None
+        assert result[2] > 0
+
+    def test_invalid_status_constraint(self, temp_db: DatabaseConnection) -> None:
+        """Test that invalid status violates CHECK constraint."""
+        conn = temp_db.connect()
+
+        # Create task
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        with pytest.raises(Exception):  # DuckDB constraint violation
+            conn.execute(
+                "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+                "VALUES (?, ?, ?, ?)",
+                [task_id, "openai", "gpt-4o", "invalid_status"],
+            )
+
+    def test_foreign_key_constraint(self, temp_db: DatabaseConnection) -> None:
+        """Test that foreign key constraint is enforced."""
+        conn = temp_db.connect()
+
+        with pytest.raises(Exception):  # DuckDB foreign key violation
+            conn.execute(
+                "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+                "VALUES (?, ?, ?, ?)",
+                [99999, "openai", "gpt-4o", "running"],
+            )
+
+
+@pytest.mark.integration
+class TestEvaluationPersistence:
+    """Tests for evaluation database operations."""
+
+    def test_insert_evaluation(self, temp_db: DatabaseConnection) -> None:
+        """Test inserting an evaluation."""
+        conn = temp_db.connect()
+
+        # Create task and execution
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed"],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        # Create evaluation
+        evaluation = EvaluationResult(
+            execution_id=execution_id,
+            score=85,
+            explanation="Good performance on the task",
+        )
+
+        # Insert evaluation
+        cursor = conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation, evaluated_at) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [
+                evaluation.execution_id,
+                evaluation.score,
+                evaluation.explanation,
+                evaluation.evaluated_at,
+            ],
+        )
+        eval_id = cursor.fetchone()[0]
+
+        assert eval_id is not None
+        assert eval_id > 0
+
+        # Verify insertion
+        result = conn.execute(
+            "SELECT score, explanation FROM evaluations WHERE id = ?", [eval_id]
+        ).fetchone()
+
+        assert result[0] == 85
+        assert result[1] == "Good performance on the task"
+
+    def test_score_boundary_constraints(self, temp_db: DatabaseConnection) -> None:
+        """Test that score boundaries are enforced."""
+        conn = temp_db.connect()
+
+        # Create task and execution
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed"],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        # Test score below 0
+        with pytest.raises(Exception):  # DuckDB constraint violation
+            conn.execute(
+                "INSERT INTO evaluations (execution_id, score, explanation) "
+                "VALUES (?, ?, ?)",
+                [execution_id, -1, "Test"],
+            )
+
+        # Test score above 100
+        with pytest.raises(Exception):  # DuckDB constraint violation
+            conn.execute(
+                "INSERT INTO evaluations (execution_id, score, explanation) "
+                "VALUES (?, ?, ?)",
+                [execution_id, 101, "Test"],
+            )
+
+    def test_unique_evaluation_per_execution(self, temp_db: DatabaseConnection) -> None:
+        """Test that only one evaluation is allowed per execution."""
+        conn = temp_db.connect()
+
+        # Create task and execution
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed"],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        # Insert first evaluation
+        conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
+            [execution_id, 85, "First evaluation"],
+        )
+
+        # Attempt to insert second evaluation for same execution
+        with pytest.raises(Exception):  # DuckDB unique constraint violation
+            conn.execute(
+                "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
+                [execution_id, 90, "Second evaluation"],
+            )
+
+
+@pytest.mark.integration
+class TestLeaderboardView:
+    """Tests for leaderboard view queries."""
+
+    def test_leaderboard_view_query(self, temp_db: DatabaseConnection) -> None:
+        """Test querying the leaderboard view."""
+        conn = temp_db.connect()
+
+        # Create task
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Calculate factorial of 5"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        # Create two executions with different models
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status, duration_seconds, token_count) "
+            "VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed", 30.5, 150],
+        )
+        exec1_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status, duration_seconds, token_count) "
+            "VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+            [task_id, "anthropic", "claude-sonnet-4", "completed", 25.0, 120],
+        )
+        exec2_id = cursor.fetchone()[0]
+
+        # Create evaluations
+        conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
+            [exec1_id, 85, "Good performance"],
+        )
+
+        conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
+            [exec2_id, 92, "Excellent performance"],
+        )
+
+        # Query leaderboard view
+        results = conn.execute(
+            "SELECT model_provider, model_name, score, duration_seconds "
+            "FROM leaderboard_entries ORDER BY score DESC"
+        ).fetchall()
+
+        # Should be ordered by score DESC
+        assert len(results) == 2
+        assert results[0][0] == "anthropic"  # Higher score first
+        assert results[0][2] == 92
+        assert results[1][0] == "openai"
+        assert results[1][2] == 85
+
+    def test_leaderboard_view_includes_all_fields(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that leaderboard view includes all required fields."""
+        conn = temp_db.connect()
+
+        # Create complete data
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status, duration_seconds, token_count, all_messages) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+            [
+                task_id,
+                "openai",
+                "gpt-4o",
+                "completed",
+                15.0,
+                100,
+                '{"messages": []}',
+            ],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
+            [execution_id, 75, "Decent performance"],
+        )
+
+        # Query leaderboard view
+        result = conn.execute(
+            """
+            SELECT execution_id, task_id, model_provider, model_name,
+                   status, duration_seconds, token_count, all_messages,
+                   score, evaluation_text, prompt
+            FROM leaderboard_entries
+            """
+        ).fetchone()
+
+        assert result[0] == execution_id
+        assert result[1] == task_id
+        assert result[2] == "openai"
+        assert result[3] == "gpt-4o"
+        assert result[4] == "completed"
+        assert result[5] == 15.0
+        assert result[6] == 100
+        assert result[7] == '{"messages": []}'
+        assert result[8] == 75
+        assert result[9] == "Decent performance"
+        assert result[10] == "Test task"
+
+
+@pytest.mark.integration
+class TestCascadeDelete:
+    """Tests for cascade delete behavior.
+
+    Note: DuckDB does not support ON DELETE CASCADE, so these tests
+    document expected behavior but are skipped.
+    """
+
+    @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
+    def test_delete_task_cascades_to_executions(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that deleting a task deletes associated executions."""
+        conn = temp_db.connect()
+
+        # Create task and execution
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed"],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        # Delete task
+        conn.execute("DELETE FROM task_submissions WHERE id = ?", [task_id])
+
+        # Verify execution is also deleted
+        result = conn.execute(
+            "SELECT COUNT(*) FROM agent_executions WHERE id = ?", [execution_id]
+        ).fetchone()
+        assert result[0] == 0
+
+    @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
+    def test_delete_execution_cascades_to_evaluation(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test that deleting an execution deletes associated evaluation."""
+        conn = temp_db.connect()
+
+        # Create task, execution, and evaluation
+        cursor = conn.execute(
+            "INSERT INTO task_submissions (prompt) VALUES (?) RETURNING id",
+            ["Test task"],
+        )
+        task_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO agent_executions (task_id, model_provider, model_name, status) "
+            "VALUES (?, ?, ?, ?) RETURNING id",
+            [task_id, "openai", "gpt-4o", "completed"],
+        )
+        execution_id = cursor.fetchone()[0]
+
+        cursor = conn.execute(
+            "INSERT INTO evaluations (execution_id, score, explanation) "
+            "VALUES (?, ?, ?) RETURNING id",
+            [execution_id, 80, "Good"],
+        )
+        eval_id = cursor.fetchone()[0]
+
+        # Delete execution
+        conn.execute("DELETE FROM agent_executions WHERE id = ?", [execution_id])
+
+        # Verify evaluation is also deleted
+        result = conn.execute(
+            "SELECT COUNT(*) FROM evaluations WHERE id = ?", [eval_id]
+        ).fetchone()
+        assert result[0] == 0

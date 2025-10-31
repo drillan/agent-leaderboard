@@ -274,19 +274,19 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T074 [P] [US6] Unit test for execution log parsing in tests/unit/test_execution.py (extract chronological tool calls from all_messages_json)
-- [ ] T075 [US6] Integration test for execution history display in tests/integration/test_ui_integration.py (select agent → show log)
+- [x] T074 [P] [US6] Unit test for execution log parsing in tests/unit/test_execution.py (extract chronological tool calls from all_messages_json) ✅
+- [x] T075 [US6] Integration test for execution history display in tests/integration/test_ui_integration.py (select agent → show log) ✅
 
 ### Implementation for User Story 6
 
 **Execution Log Parsing**
 
-- [ ] T076 [US6] Implement execution log parser in src/execution/executor.py (extract tool calls with timestamps from all_messages_json)
+- [x] T076 [US6] Implement execution log parser in src/execution/executor.py (extract tool calls with timestamps from all_messages_json) ✅
 
 **UI Components**
 
-- [ ] T077 [P] [US6] Create execution log display component in src/ui/components/execution_log.py (chronological list of tool calls)
-- [ ] T078 [US6] Add execution log modal/panel to leaderboard in src/ui/components/leaderboard.py (click agent → show log)
+- [x] T077 [P] [US6] Create execution log display component in src/ui/components/execution_log.py (chronological list of tool calls) ✅
+- [x] T078 [US6] Add execution log modal/panel to leaderboard in src/ui/components/leaderboard.py (click agent → show log) ✅
 
 **Checkpoint**: All 6 user stories functional - complete multi-agent competition system
 

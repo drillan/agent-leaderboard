@@ -42,9 +42,7 @@ class TestPerformanceMetricsQuery:
         # This test will be implemented after T054
         pass
 
-    def test_get_performance_metrics_excludes_incomplete(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_performance_metrics_excludes_incomplete(self, temp_db: DatabaseConnection) -> None:
         """Test that performance metrics only includes completed executions.
 
         Expected behavior:
@@ -59,9 +57,7 @@ class TestPerformanceMetricsQuery:
         # This test will be implemented after T054
         pass
 
-    def test_get_performance_metrics_with_zero_tokens(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_performance_metrics_with_zero_tokens(self, temp_db: DatabaseConnection) -> None:
         """Test performance metrics handles executions with zero token count.
 
         Expected behavior:
@@ -73,9 +69,7 @@ class TestPerformanceMetricsQuery:
         # This test will be implemented after T054
         pass
 
-    def test_get_performance_metrics_empty_result(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_performance_metrics_empty_result(self, temp_db: DatabaseConnection) -> None:
         """Test performance metrics returns empty list for task with no executions.
 
         Expected behavior:
@@ -86,9 +80,7 @@ class TestPerformanceMetricsQuery:
         # This test will be implemented after T054
         pass
 
-    def test_get_performance_metrics_sorts_by_model(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_performance_metrics_sorts_by_model(self, temp_db: DatabaseConnection) -> None:
         """Test that performance metrics are sorted consistently.
 
         Expected workflow:
@@ -108,9 +100,7 @@ class TestPerformanceMetricsQuery:
 class TestPerformanceMetricsAggregation:
     """Tests for aggregate calculations on performance metrics."""
 
-    def test_calculate_average_duration_per_model(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_calculate_average_duration_per_model(self, temp_db: DatabaseConnection) -> None:
         """Test calculating average duration grouped by model.
 
         Expected workflow:
@@ -123,9 +113,7 @@ class TestPerformanceMetricsAggregation:
         # This test will be implemented after T054
         pass
 
-    def test_calculate_total_tokens_per_model(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_calculate_total_tokens_per_model(self, temp_db: DatabaseConnection) -> None:
         """Test calculating total tokens grouped by model.
 
         Expected workflow:
@@ -138,9 +126,7 @@ class TestPerformanceMetricsAggregation:
         # This test will be implemented after T054
         pass
 
-    def test_calculate_metrics_across_all_tasks(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_calculate_metrics_across_all_tasks(self, temp_db: DatabaseConnection) -> None:
         """Test querying performance metrics across all tasks.
 
         Expected behavior:
@@ -174,9 +160,7 @@ class TestTaskHistoryQuery:
         # This test will be implemented after T069
         pass
 
-    def test_get_task_history_ordered_by_created_at_desc(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_task_history_ordered_by_created_at_desc(self, temp_db: DatabaseConnection) -> None:
         """Test that task history is ordered by created_at descending (newest first).
 
         Expected behavior:
@@ -190,9 +174,7 @@ class TestTaskHistoryQuery:
         # This test will be implemented after T069
         pass
 
-    def test_get_task_history_includes_execution_counts(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_task_history_includes_execution_counts(self, temp_db: DatabaseConnection) -> None:
         """Test that task history includes execution counts per task.
 
         Expected workflow:
@@ -205,9 +187,7 @@ class TestTaskHistoryQuery:
         # This test will be implemented after T069
         pass
 
-    def test_get_task_history_includes_evaluation_scores(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_task_history_includes_evaluation_scores(self, temp_db: DatabaseConnection) -> None:
         """Test that task history includes evaluation score summary.
 
         Expected behavior:
@@ -231,9 +211,7 @@ class TestTaskHistoryQuery:
         # This test will be implemented after T069
         pass
 
-    def test_get_task_history_includes_prompt_preview(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_get_task_history_includes_prompt_preview(self, temp_db: DatabaseConnection) -> None:
         """Test that task history includes prompt text.
 
         Expected workflow:

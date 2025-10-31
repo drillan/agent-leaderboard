@@ -25,9 +25,7 @@ class TestModelConfig:
     def test_valid_model_config(self) -> None:
         """Test valid model configuration."""
         os.environ["TEST_API_KEY"] = "test-key-123"
-        config = ModelConfig(
-            provider="openai", model="gpt-4o", api_key_env="TEST_API_KEY"
-        )
+        config = ModelConfig(provider="openai", model="gpt-4o", api_key_env="TEST_API_KEY")
         assert config.provider == "openai"
         assert config.model == "gpt-4o"
         assert config.api_key_env == "TEST_API_KEY"
@@ -39,9 +37,7 @@ class TestModelConfig:
             del os.environ["NONEXISTENT_KEY"]
 
         with pytest.raises(ValueError, match="not found"):
-            ModelConfig(
-                provider="openai", model="gpt-4o", api_key_env="NONEXISTENT_KEY"
-            )
+            ModelConfig(provider="openai", model="gpt-4o", api_key_env="NONEXISTENT_KEY")
 
     def test_empty_api_key(self) -> None:
         """Test that empty API key raises error."""
@@ -126,9 +122,7 @@ class TestAppConfig:
             execution=ExecutionConfig(timeout_seconds=60),
             task_agents=[
                 ModelConfig(provider="openai", model="gpt-4o", api_key_env="KEY1"),
-                ModelConfig(
-                    provider="anthropic", model="claude-sonnet-4", api_key_env="KEY2"
-                ),
+                ModelConfig(provider="anthropic", model="claude-sonnet-4", api_key_env="KEY2"),
             ],
             evaluation_agent=EvaluationConfig(
                 provider="openai",
@@ -154,11 +148,7 @@ class TestAppConfig:
         with pytest.raises(ValueError):
             AppConfig(
                 execution=ExecutionConfig(),
-                task_agents=[
-                    ModelConfig(
-                        provider="openai", model="gpt-4o", api_key_env="KEY1"
-                    )
-                ],
+                task_agents=[ModelConfig(provider="openai", model="gpt-4o", api_key_env="KEY1")],
                 evaluation_agent=EvaluationConfig(
                     provider="openai",
                     model="gpt-4o",
@@ -180,12 +170,8 @@ class TestAppConfig:
             AppConfig(
                 execution=ExecutionConfig(),
                 task_agents=[
-                    ModelConfig(
-                        provider="openai", model="gpt-4o", api_key_env="KEY1"
-                    ),
-                    ModelConfig(
-                        provider="openai", model="gpt-4o", api_key_env="KEY1"
-                    ),
+                    ModelConfig(provider="openai", model="gpt-4o", api_key_env="KEY1"),
+                    ModelConfig(provider="openai", model="gpt-4o", api_key_env="KEY1"),
                 ],
                 evaluation_agent=EvaluationConfig(
                     provider="openai",

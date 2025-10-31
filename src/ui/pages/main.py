@@ -73,9 +73,7 @@ class MainPage:
 
             # Add agents to state
             for model_config in self.config.task_agents:
-                self.current_execution_state.add_agent(
-                    model_config.provider, model_config.model
-                )
+                self.current_execution_state.add_agent(model_config.provider, model_config.model)
 
             # Update status display
             if self.status_display:
@@ -100,9 +98,7 @@ class MainPage:
 
                 # Update state
                 model_identifier = f"{execution.model_provider}/{execution.model_name}"
-                self.current_execution_state.update_status(
-                    model_identifier, execution.status
-                )
+                self.current_execution_state.update_status(model_identifier, execution.status)
 
             # Update status display with final results
             if self.status_display:
@@ -171,14 +167,10 @@ class MainPage:
         create_task_input_form(on_submit=handle_submit)
 
         # Execution status display
-        self.status_display = create_execution_status_display(
-            self.current_execution_state
-        )
+        self.status_display = create_execution_status_display(self.current_execution_state)
 
         # Leaderboard
-        self.leaderboard = create_leaderboard_table(
-            self.repository, self.current_task_id
-        )
+        self.leaderboard = create_leaderboard_table(self.repository, self.current_task_id)
 
         # Tool call tree panel
         self.tool_tree_panel = create_tool_call_tree_panel(self.current_executions)

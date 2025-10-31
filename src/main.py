@@ -86,10 +86,7 @@ def main() -> None:
         print("✓ Configuration validation:")
         print(f"   - Task agents: {len(config.task_agents)} configured")
         for i, agent in enumerate(config.task_agents, 1):
-            print(
-                f"     {i}. {agent.provider}/{agent.model} "
-                f"(API key: {agent.api_key_env})"
-            )
+            print(f"     {i}. {agent.provider}/{agent.model} (API key: {agent.api_key_env})")
 
         print(
             f"   - Evaluation agent: "
@@ -107,13 +104,11 @@ def main() -> None:
             file=sys.stderr,
         )
         print(
-            "   - Duplicate models: Each agent must use a unique "
-            "provider/model combination",
+            "   - Duplicate models: Each agent must use a unique provider/model combination",
             file=sys.stderr,
         )
         print(
-            "   - API keys: All API key environment variables must be "
-            "set and non-empty",
+            "   - API keys: All API key environment variables must be set and non-empty",
             file=sys.stderr,
         )
         print("   - Timeout: Must be between 1-600 seconds", file=sys.stderr)

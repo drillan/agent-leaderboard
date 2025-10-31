@@ -57,9 +57,7 @@ class PerformancePage:
             for task in tasks:
                 prompt_str = cast(str, task["prompt"])
                 task_id = cast(int, task["id"])
-                prompt_preview = (
-                    prompt_str[:50] + "..." if len(prompt_str) > 50 else prompt_str
-                )
+                prompt_preview = prompt_str[:50] + "..." if len(prompt_str) > 50 else prompt_str
                 task_options[f"Task #{task_id}: {prompt_preview}"] = task_id
 
             def on_task_select(e: ValueChangeEventArguments) -> None:

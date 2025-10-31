@@ -220,9 +220,7 @@ async def evaluate_execution(
         agent_response = f"Failed to extract response: {e}"
 
     # Format evaluation prompt
-    formatted_prompt = format_evaluation_prompt(
-        eval_config.prompt, task_prompt, agent_response
-    )
+    formatted_prompt = format_evaluation_prompt(eval_config.prompt, task_prompt, agent_response)
 
     # Run evaluation agent
     result = await evaluation_agent.run(formatted_prompt)
@@ -479,9 +477,7 @@ def format_log_entry(entry: ExecutionLogEntry, max_content_length: int = 200) ->
         "[tool_call:check_prime] {n: 17}"
     """
     # Format type with tool name if applicable
-    type_str = (
-        f"{entry['type']}:{entry['tool_name']}" if entry["tool_name"] else entry["type"]
-    )
+    type_str = f"{entry['type']}:{entry['tool_name']}" if entry["tool_name"] else entry["type"]
 
     # Format content
     content = entry["content"]

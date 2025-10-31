@@ -4,8 +4,6 @@ Tests for evaluation agent and related functionality.
 """
 
 
-
-
 class TestEvaluationAgent:
     """Tests for evaluation agent functionality."""
 
@@ -81,7 +79,6 @@ class TestEvaluationExplanationExtraction:
 
     def test_extract_explanation_from_text(self) -> None:
         """Test extracting explanation text from response."""
-
 
         assert True  # Placeholder
 

@@ -57,8 +57,7 @@ class TestDatabaseInitialization:
         """Test that task_submissions table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'task_submissions'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'task_submissions'"
         ).fetchone()
         assert result[0] == 1
 
@@ -66,8 +65,7 @@ class TestDatabaseInitialization:
         """Test that agent_executions table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'agent_executions'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'agent_executions'"
         ).fetchone()
         assert result[0] == 1
 
@@ -75,8 +73,7 @@ class TestDatabaseInitialization:
         """Test that evaluations table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'evaluations'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'evaluations'"
         ).fetchone()
         assert result[0] == 1
 
@@ -84,8 +81,7 @@ class TestDatabaseInitialization:
         """Test that leaderboard_entries view exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.views "
-            "WHERE table_name = 'leaderboard_entries'"
+            "SELECT COUNT(*) FROM information_schema.views WHERE table_name = 'leaderboard_entries'"
         ).fetchone()
         assert result[0] == 1
 
@@ -160,9 +156,7 @@ class TestAgentExecutionPersistence:
         task_id = cursor.fetchone()[0]
 
         # Create execution
-        execution = AgentExecution(
-            task_id=task_id, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=task_id, model_provider="openai", model_name="gpt-4o")
 
         # Insert execution
         cursor = conn.execute(
@@ -205,9 +199,7 @@ class TestAgentExecutionPersistence:
         )
         task_id = cursor.fetchone()[0]
 
-        execution = AgentExecution(
-            task_id=task_id, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=task_id, model_provider="openai", model_name="gpt-4o")
 
         cursor = conn.execute(
             "INSERT INTO agent_executions (task_id, model_provider, model_name, status, started_at) "
@@ -355,16 +347,14 @@ class TestEvaluationPersistence:
         # Test score below 0
         with pytest.raises(Exception):  # DuckDB constraint violation
             conn.execute(
-                "INSERT INTO evaluations (execution_id, score, explanation) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
                 [execution_id, -1, "Test"],
             )
 
         # Test score above 100
         with pytest.raises(Exception):  # DuckDB constraint violation
             conn.execute(
-                "INSERT INTO evaluations (execution_id, score, explanation) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
                 [execution_id, 101, "Test"],
             )
 
@@ -454,9 +444,7 @@ class TestLeaderboardView:
         assert results[1][0] == "openai"
         assert results[1][2] == 85
 
-    def test_leaderboard_view_includes_all_fields(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_leaderboard_view_includes_all_fields(self, temp_db: DatabaseConnection) -> None:
         """Test that leaderboard view includes all required fields."""
         conn = temp_db.connect()
 
@@ -519,9 +507,7 @@ class TestCascadeDelete:
     """
 
     @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
-    def test_delete_task_cascades_to_executions(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_delete_task_cascades_to_executions(self, temp_db: DatabaseConnection) -> None:
         """Test that deleting a task deletes associated executions."""
         conn = temp_db.connect()
 
@@ -549,9 +535,7 @@ class TestCascadeDelete:
         assert result[0] == 0
 
     @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
-    def test_delete_execution_cascades_to_evaluation(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_delete_execution_cascades_to_evaluation(self, temp_db: DatabaseConnection) -> None:
         """Test that deleting an execution deletes associated evaluation."""
         conn = temp_db.connect()
 
@@ -580,9 +564,7 @@ class TestCascadeDelete:
         conn.execute("DELETE FROM agent_executions WHERE id = ?", [execution_id])
 
         # Verify evaluation is also deleted
-        result = conn.execute(
-            "SELECT COUNT(*) FROM evaluations WHERE id = ?", [eval_id]
-        ).fetchone()
+        result = conn.execute("SELECT COUNT(*) FROM evaluations WHERE id = ?", [eval_id]).fetchone()
         assert result[0] == 0
 
 
@@ -596,9 +578,7 @@ class TestEvaluationWorkflow:
     - T045: Evaluation executor
     """
 
-    def test_execute_and_evaluate_single_agent(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_execute_and_evaluate_single_agent(self, temp_db: DatabaseConnection) -> None:
         """Test executing an agent and then evaluating its response.
 
         Expected workflow:
@@ -611,9 +591,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_evaluate_multiple_agent_responses(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluate_multiple_agent_responses(self, temp_db: DatabaseConnection) -> None:
         """Test evaluating multiple agents' responses to same task.
 
         Expected workflow:
@@ -626,9 +604,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_evaluation_score_extraction(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluation_score_extraction(self, temp_db: DatabaseConnection) -> None:
         """Test that evaluation properly extracts score from LLM response.
 
         Expected behavior:
@@ -640,9 +616,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_evaluation_with_failed_execution(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluation_with_failed_execution(self, temp_db: DatabaseConnection) -> None:
         """Test evaluating a failed agent execution.
 
         Expected behavior:
@@ -653,9 +627,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_evaluation_with_timeout_execution(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluation_with_timeout_execution(self, temp_db: DatabaseConnection) -> None:
         """Test evaluating a timed-out agent execution.
 
         Expected behavior:
@@ -665,9 +637,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_leaderboard_query_after_evaluation(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_leaderboard_query_after_evaluation(self, temp_db: DatabaseConnection) -> None:
         """Test querying leaderboard after evaluations complete.
 
         Expected workflow:
@@ -680,9 +650,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_leaderboard_query_with_tie_scores(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_leaderboard_query_with_tie_scores(self, temp_db: DatabaseConnection) -> None:
         """Test leaderboard sorting when multiple agents have same score.
 
         Expected workflow:
@@ -695,9 +663,7 @@ class TestEvaluationWorkflow:
         # This test will be implemented after T044-T045
         pass
 
-    def test_leaderboard_empty_for_unevaluated_task(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_leaderboard_empty_for_unevaluated_task(self, temp_db: DatabaseConnection) -> None:
         """Test that leaderboard is empty for task without evaluations.
 
         Expected behavior:
@@ -717,9 +683,7 @@ class TestToolHierarchyIntegration:
     These tests will be enabled after implementing T046.
     """
 
-    def test_extract_tool_calls_from_real_execution(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_extract_tool_calls_from_real_execution(self, temp_db: DatabaseConnection) -> None:
         """Test extracting tool calls from actual agent execution.
 
         Expected workflow:
@@ -731,9 +695,7 @@ class TestToolHierarchyIntegration:
         # This test will be implemented after T046
         pass
 
-    def test_tool_hierarchy_with_sequential_calls(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_tool_hierarchy_with_sequential_calls(self, temp_db: DatabaseConnection) -> None:
         """Test hierarchy extraction when agent makes sequential tool calls.
 
         Expected:
@@ -745,9 +707,7 @@ class TestToolHierarchyIntegration:
         # This test will be implemented after T046
         pass
 
-    def test_tool_hierarchy_display_format(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_tool_hierarchy_display_format(self, temp_db: DatabaseConnection) -> None:
         """Test formatting tool hierarchy for display.
 
         Expected:

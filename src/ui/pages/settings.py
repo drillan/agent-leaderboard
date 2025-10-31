@@ -46,9 +46,7 @@ class SettingsPage:
 
         # Action buttons
         with ui.row().classes("w-full justify-end gap-4 mt-6"):
-            ui.button("Cancel", icon="cancel", on_click=self._on_cancel).props(
-                "outline color=grey"
-            )
+            ui.button("Cancel", icon="cancel", on_click=self._on_cancel).props("outline color=grey")
             ui.button("Save Configuration", icon="save", on_click=self._on_save).props(
                 "color=primary"
             )

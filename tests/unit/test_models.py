@@ -97,17 +97,13 @@ class TestAgentExecution:
     def test_started_at_is_recent(self) -> None:
         """Test that started_at is set to current time."""
         before = datetime.now()
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         after = datetime.now()
         assert before <= execution.started_at <= after
 
     def test_calculate_duration(self) -> None:
         """Test duration calculation from timestamps."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.started_at = datetime(2025, 1, 1, 12, 0, 0)
         execution.completed_at = datetime(2025, 1, 1, 12, 0, 30)
         execution.calculate_duration()
@@ -115,9 +111,7 @@ class TestAgentExecution:
 
     def test_calculate_duration_with_fractional_seconds(self) -> None:
         """Test duration calculation with fractional seconds."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.started_at = datetime.now()
         execution.completed_at = execution.started_at + timedelta(seconds=45.5)
         execution.calculate_duration()
@@ -125,17 +119,13 @@ class TestAgentExecution:
 
     def test_calculate_duration_without_completion(self) -> None:
         """Test that duration is not calculated if not completed."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.calculate_duration()
         assert execution.duration_seconds is None
 
     def test_mark_completed(self) -> None:
         """Test marking execution as completed."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.mark_completed()
         assert execution.status == ExecutionStatus.COMPLETED
         assert execution.completed_at is not None
@@ -144,9 +134,7 @@ class TestAgentExecution:
 
     def test_mark_failed(self) -> None:
         """Test marking execution as failed."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.mark_failed()
         assert execution.status == ExecutionStatus.FAILED
         assert execution.completed_at is not None
@@ -154,9 +142,7 @@ class TestAgentExecution:
 
     def test_mark_timeout(self) -> None:
         """Test marking execution as timed out."""
-        execution = AgentExecution(
-            task_id=1, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=1, model_provider="openai", model_name="gpt-4o")
         execution.mark_timeout()
         assert execution.status == ExecutionStatus.TIMEOUT
         assert execution.completed_at is not None
@@ -195,16 +181,12 @@ class TestEvaluationResult:
 
     def test_score_minimum_boundary(self) -> None:
         """Test score minimum boundary (0)."""
-        evaluation = EvaluationResult(
-            execution_id=1, score=0, explanation="Failed completely"
-        )
+        evaluation = EvaluationResult(execution_id=1, score=0, explanation="Failed completely")
         assert evaluation.score == 0
 
     def test_score_maximum_boundary(self) -> None:
         """Test score maximum boundary (100)."""
-        evaluation = EvaluationResult(
-            execution_id=1, score=100, explanation="Perfect execution"
-        )
+        evaluation = EvaluationResult(execution_id=1, score=100, explanation="Perfect execution")
         assert evaluation.score == 100
 
     def test_score_below_minimum_rejected(self) -> None:
@@ -229,9 +211,7 @@ class TestEvaluationResult:
 
     def test_explanation_trimmed_property(self) -> None:
         """Test explanation_trimmed property removes whitespace."""
-        evaluation = EvaluationResult(
-            execution_id=1, score=75, explanation="  Good work  \n"
-        )
+        evaluation = EvaluationResult(execution_id=1, score=75, explanation="  Good work  \n")
         assert evaluation.explanation_trimmed == "Good work"
 
     def test_is_passing_below_threshold(self) -> None:

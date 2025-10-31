@@ -72,14 +72,10 @@ class HistoryPage:
                 # Get task info
                 task = self.repository.get_task(task_id)
                 if task:
-                    ui.label(f"Task #{task_id}: {task.prompt}").classes(
-                        "text-caption text-grey-7"
-                    )
+                    ui.label(f"Task #{task_id}: {task.prompt}").classes("text-caption text-grey-7")
 
                 # Render leaderboard for selected task
-                self.leaderboard = LeaderboardTable(
-                    repository=self.repository, task_id=task_id
-                )
+                self.leaderboard = LeaderboardTable(repository=self.repository, task_id=task_id)
                 self.leaderboard.create()
 
     def refresh(self) -> None:

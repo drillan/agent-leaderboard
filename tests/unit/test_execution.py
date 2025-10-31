@@ -165,12 +165,10 @@ class TestToolCallTreeStructure:
         """Test calculating depth of tool call tree."""
         # Tree with 3 levels: root -> child -> grandchild
 
-
         assert True  # Placeholder
 
     def test_tree_leaf_node_count(self) -> None:
         """Test counting leaf nodes (nodes with no children)."""
-
 
         assert True  # Placeholder
 

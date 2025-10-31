@@ -43,9 +43,7 @@ def create_evaluation_agent(config: EvaluationConfig) -> Agent:
     return agent
 
 
-def format_evaluation_prompt(
-    prompt_template: str, task_prompt: str, agent_response: str
-) -> str:
+def format_evaluation_prompt(prompt_template: str, task_prompt: str, agent_response: str) -> str:
     """Format evaluation prompt by substituting placeholders.
 
     Args:
@@ -64,9 +62,7 @@ def format_evaluation_prompt(
     if "{agent_response}" not in prompt_template:
         raise ValueError("Prompt template missing {agent_response} placeholder")
 
-    return prompt_template.format(
-        task_prompt=task_prompt, agent_response=agent_response
-    )
+    return prompt_template.format(task_prompt=task_prompt, agent_response=agent_response)
 
 
 def extract_score(text: str) -> int:
@@ -112,9 +108,7 @@ def extract_explanation(text: str) -> str:
         ValueError: If explanation cannot be extracted or is empty
     """
     # Try to find "Explanation: <text>" pattern
-    explanation_match = re.search(
-        r"Explanation:\s*(.+)", text, re.IGNORECASE | re.DOTALL
-    )
+    explanation_match = re.search(r"Explanation:\s*(.+)", text, re.IGNORECASE | re.DOTALL)
     if explanation_match:
         explanation = explanation_match.group(1).strip()
         if explanation:

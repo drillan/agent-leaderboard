@@ -127,11 +127,7 @@ class SettingsForm:
         # Add agent button
         ui.button("Add Task Agent", icon="add", on_click=self._add_task_agent_form).props(
             "outline color=primary"
-        ).bind_enabled_from(
-            self,
-            "task_agent_forms",
-            backward=lambda forms: len(forms) < 5
-        )
+        ).bind_enabled_from(self, "task_agent_forms", backward=lambda forms: len(forms) < 5)
 
         # Evaluation Agent Section
         ui.label("Evaluation Agent").classes("text-h6 mt-6")
@@ -149,11 +145,15 @@ class SettingsForm:
         self.eval_agent_form.create()
 
         # Evaluation prompt
-        self.eval_prompt_input = ui.textarea(
-            label="Evaluation Prompt Template",
-            value=self.config.evaluation_agent.prompt,
-            placeholder="Use {task_prompt} and {agent_response} placeholders",
-        ).classes("w-full").props("rows=5")
+        self.eval_prompt_input = (
+            ui.textarea(
+                label="Evaluation Prompt Template",
+                value=self.config.evaluation_agent.prompt,
+                placeholder="Use {task_prompt} and {agent_response} placeholders",
+            )
+            .classes("w-full")
+            .props("rows=5")
+        )
 
         # Execution Settings Section
         ui.label("Execution Settings").classes("text-h6 mt-6")

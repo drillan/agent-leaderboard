@@ -38,9 +38,7 @@ def build_tree_structure(nodes: list[ToolCallNode]) -> list[dict[str, Any]]:
 
         # Add children recursively
         if node["children"]:
-            tree_node["children"] = [
-                node_to_tree(child) for child in node["children"]
-            ]
+            tree_node["children"] = [node_to_tree(child) for child in node["children"]]
 
         return tree_node
 
@@ -156,8 +154,7 @@ class ToolCallTreePanel:
 
             # Create execution selector
             execution_options = {
-                f"{exec.model_provider}/{exec.model_name}": exec
-                for exec in self.executions
+                f"{exec.model_provider}/{exec.model_name}": exec for exec in self.executions
             }
 
             def on_select(e: ValueChangeEventArguments) -> None:

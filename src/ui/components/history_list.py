@@ -13,20 +13,25 @@ from nicegui import ui
 from src.database.repositories import TaskRepository
 
 
-def format_timestamp(timestamp_str: str) -> str:
+def format_timestamp(timestamp: str | datetime | Any) -> str:
     """Format ISO timestamp to human-readable string.
 
     Args:
-        timestamp_str: ISO format timestamp string
+        timestamp: ISO format timestamp string or datetime object
 
     Returns:
         Formatted string (e.g., "2024-01-15 14:30")
     """
     try:
-        dt = datetime.fromisoformat(timestamp_str)
+        # If it's already a datetime object, use it directly
+        if isinstance(timestamp, datetime):
+            dt = timestamp
+        else:
+            # Otherwise, parse from string
+            dt = datetime.fromisoformat(str(timestamp))
         return dt.strftime("%Y-%m-%d %H:%M")
-    except (ValueError, AttributeError):
-        return timestamp_str
+    except (ValueError, AttributeError, TypeError):
+        return str(timestamp)
 
 
 def truncate_prompt(prompt: str, max_length: int = 60) -> str:

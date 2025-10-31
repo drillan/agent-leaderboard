@@ -30,7 +30,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.4.1" },
-    { name = "nicegui", specifier = ">=3.2.0" },
+    { name = "nicegui", specifier = ">=2.9.0,<3.0.0" },
     { name = "plotly", specifier = ">=6.3.1" },
     { name = "pydantic-ai-slim", extras = ["openai", "anthropic", "google"], specifier = ">=1.9.0" },
     { name = "tomli-w", specifier = ">=1.2.0" },
@@ -926,7 +926,7 @@ wheels = [
 
 [[package]]
 name = "nicegui"
-version = "3.2.0"
+version = "2.24.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -948,11 +948,12 @@ dependencies = [
     { name = "starlette" },
     { name = "typing-extensions" },
     { name = "uvicorn", extra = ["standard"] },
+    { name = "vbuild" },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/b0/f87402ea053a619e3c48166f086d169cb276ddf93783c7a78aa0c416c24d/nicegui-3.2.0.tar.gz", hash = "sha256:886a9e2498a423c81b6ad5097f687a5819207aae439aa283966d57f9492ca14c", size = 20347752, upload-time = "2025-10-28T13:13:27.501Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/fc/ddb6265ae6979a4a0b251dcea5d2a5f582883cb63a3f81cafb8c04c9a090/nicegui-2.24.2.tar.gz", hash = "sha256:21e7620c99aeeb535665e81e45ef2f9eeda95f6a9e35cee542414a10bbe61b77", size = 13109064, upload-time = "2025-09-23T13:45:58.243Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/c3/4c42b72f940be5bc3f9f7549d17a273e2ece0f8aad0a1d04026e89e0889c/nicegui-3.2.0-py3-none-any.whl", hash = "sha256:17d8ec94cfa0417846598c269162ae3f2b0a9e75f0f841bd5aa9fc6b7c0edcc4", size = 21001227, upload-time = "2025-10-28T13:13:24.311Z" },
+    { url = "https://files.pythonhosted.org/packages/52/c1/6a49602d7c33ab8286654a3d64c83d5d2534d4b90d256eaed92c3fefc7f4/nicegui-2.24.2-py3-none-any.whl", hash = "sha256:9b810fe75f3dd1ff926e3d96d71e25031387fe5b7a21d32159a32611b8023423", size = 13496524, upload-time = "2025-09-23T13:45:55.437Z" },
 ]
 
 [[package]]
@@ -1132,6 +1133,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/ef/3c6ecf8b317aa982f309835e8f96987466123c6e596646d4e6a1dfcd080f/propcache-0.4.1-cp314-cp314t-win_amd64.whl", hash = "sha256:990f6b3e2a27d683cb7602ed6c86f15ee6b43b1194736f9baaeb93d0016633b1", size = 46259, upload-time = "2025-10-08T19:48:34.226Z" },
     { url = "https://files.pythonhosted.org/packages/c4/2d/346e946d4951f37eca1e4f55be0f0174c52cd70720f84029b02f296f4a38/propcache-0.4.1-cp314-cp314t-win_arm64.whl", hash = "sha256:ecef2343af4cc68e05131e45024ba34f6095821988a9d0a02aa7c73fcc448aa9", size = 40428, upload-time = "2025-10-08T19:48:35.441Z" },
     { url = "https://files.pythonhosted.org/packages/5b/5a/bc7b4a4ef808fa59a816c17b20c4bef6884daebbdf627ff2a161da67da19/propcache-0.4.1-py3-none-any.whl", hash = "sha256:af2a6052aeb6cf17d3e46ee169099044fd8224cbaf75c76a2ef596e8163e2237", size = 13305, upload-time = "2025-10-08T19:49:00.792Z" },
+]
+
+[[package]]
+name = "pscript"
+version = "0.7.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/68/f918702e270eddc5f7c54108f6a2f2afc2d299985820dbb0db9beb77d66d/pscript-0.7.7.tar.gz", hash = "sha256:8632f7a4483f235514aadee110edee82eb6d67336bf68744a7b18d76e50442f8", size = 176138, upload-time = "2022-01-10T10:55:02.559Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/bc/980e2ebd442d2a8f1d22780f73db76f2a1df3bf79b3fb501b054b4b4dd03/pscript-0.7.7-py3-none-any.whl", hash = "sha256:b0fdac0df0393a4d7497153fea6a82e6429f32327c4c0a4817f1cd68adc08083", size = 126689, upload-time = "2022-01-10T10:55:00.793Z" },
 ]
 
 [[package]]
@@ -1705,6 +1715,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/37/945b4ca0ac27e3dc4952642d4c900edd030b3da6c9634875af6e13ae80e5/uvloop-0.22.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b91328c72635f6f9e0282e4a57da7470c7350ab1c9f48546c0f2866205349d21", size = 4467065, upload-time = "2025-10-16T22:16:58.206Z" },
     { url = "https://files.pythonhosted.org/packages/97/cc/48d232f33d60e2e2e0b42f4e73455b146b76ebe216487e862700457fbf3c/uvloop-0.22.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:daf620c2995d193449393d6c62131b3fbd40a63bf7b307a1527856ace637fe88", size = 4328384, upload-time = "2025-10-16T22:16:59.36Z" },
     { url = "https://files.pythonhosted.org/packages/e4/16/c1fd27e9549f3c4baf1dc9c20c456cd2f822dbf8de9f463824b0c0357e06/uvloop-0.22.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:6cde23eeda1a25c75b2e07d39970f3374105d5eafbaab2a4482be82f272d5a5e", size = 4296730, upload-time = "2025-10-16T22:17:00.744Z" },
+]
+
+[[package]]
+name = "vbuild"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pscript" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/22/be/f0c6204a36440bbcc086bfa25964d009b7391c5a3c74d6e73188efd47adb/vbuild-0.8.2.tar.gz", hash = "sha256:270cd9078349d907dfae6c0e6364a5a5e74cb86183bb5093613f12a18b435fa9", size = 8937, upload-time = "2023-08-03T09:26:36.196Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/3d/7b22abbdb059d551507275a2815bc2b1974e3b9f6a13781c1eac9e858965/vbuild-0.8.2-py2.py3-none-any.whl", hash = "sha256:d76bcc976a1c53b6a5776ac947606f9e7786c25df33a587ebe33ed09dd8a1076", size = 9371, upload-time = "2023-08-03T09:26:35.023Z" },
 ]
 
 [[package]]

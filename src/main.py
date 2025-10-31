@@ -5,6 +5,7 @@ This module initializes and runs the Multi-Agent Competition System.
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -175,12 +176,19 @@ def main() -> None:
     print(f"   Timeout: {config.execution.timeout_seconds}s")
     print("\nPress Ctrl+C to stop\n")
 
+    # Detect if running on Hugging Face Spaces
+    is_spaces = os.getenv("SPACE_ID") is not None
+    if is_spaces:
+        print("   Detected Hugging Face Spaces environment")
+
     ui.run(
         host=args.host,
         port=args.port,
         title="Multi-Agent Competition System",
-        reload=args.reload,
+        reload=False,  # Disable reload in production
         show=False,  # Don't auto-open browser
+        storage_secret="multi_agent_leaderboard_secret_key",  # Required for session storage
+        uvicorn_logging_level="info",  # Enable detailed logging
     )
 
 

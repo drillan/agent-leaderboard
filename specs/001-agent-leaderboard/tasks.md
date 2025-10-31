@@ -131,9 +131,9 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
-- [ ] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
-- [ ] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
+- [x] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
+- [x] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
+- [x] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
 
 ### Implementation for User Story 2
 

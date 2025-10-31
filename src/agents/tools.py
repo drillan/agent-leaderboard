@@ -86,9 +86,11 @@ def check_palindrome(text: str) -> dict[str, bool | str]:
         >>> check_palindrome("racecar")
         {'is_palindrome': True, 'cleaned_text': 'racecar', 'reason': 'Text is a palindrome'}
         >>> check_palindrome("A man a plan a canal Panama")
-        {'is_palindrome': True, 'cleaned_text': 'amanaplanacanalpanama', 'reason': 'Text is a palindrome'}
+        {'is_palindrome': True, 'cleaned_text': 'amanaplanacanalpanama',
+         'reason': 'Text is a palindrome'}
         >>> check_palindrome("hello")
-        {'is_palindrome': False, 'cleaned_text': 'hello', 'reason': 'Text is not a palindrome'}
+        {'is_palindrome': False, 'cleaned_text': 'hello',
+         'reason': 'Text is not a palindrome'}
     """
     # Remove non-alphanumeric characters and convert to lowercase
     cleaned = "".join(c.lower() for c in text if c.isalnum())

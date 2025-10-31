@@ -184,13 +184,16 @@ class MainPage:
             self._display_leaderboard(task_id)
 
             # Display tool calls from first execution
-            if executions and self.tool_tree_component:
-                first_execution = executions[0]
-                if first_execution.all_messages_json:
-                    logger.info("Updating tool tree with first execution")
-                    self.tool_tree_component.update_from_messages(
-                        first_execution.all_messages_json
-                    )
+            try:
+                if executions and self.tool_tree_component:
+                    first_execution = executions[0]
+                    if first_execution.all_messages_json:
+                        logger.info("Updating tool tree with first execution")
+                        self.tool_tree_component.update_from_messages(
+                            first_execution.all_messages_json
+                        )
+            except Exception as e:
+                logger.error(f"Failed to update tool tree: {str(e)}", exc_info=True)
 
             # Show completion notification
             completed = self.current_execution_state.get_completed_count()
@@ -209,7 +212,6 @@ class MainPage:
         except Exception as e:
             logger.error(f"Task execution failed: {str(e)}", exc_info=True)
             ui.notify(f"Execution failed: {str(e)}", type="negative")
-            raise
 
         finally:
             self.is_executing = False

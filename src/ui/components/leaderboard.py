@@ -173,10 +173,10 @@ class LeaderboardTable:
                 {
                     "rank": rank,
                     "model": model_identifier,
-                    "score": entry["evaluation_score"],
+                    "score": entry.get("score") or "N/A",
                     "duration": format_duration(duration_seconds),
                     "tokens": entry.get("token_count") or "N/A",
-                    "explanation": entry.get("evaluation_explanation", "N/A"),
+                    "explanation": entry.get("evaluation_text", "N/A"),
                     "execution_id": execution_id,
                     "actions": "",  # Placeholder for actions column
                 }

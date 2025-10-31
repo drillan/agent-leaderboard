@@ -17,8 +17,9 @@ CREATE TABLE IF NOT EXISTS schema_metadata (
 
 # DDL for task_submissions table
 CREATE_TASK_SUBMISSIONS_TABLE = """
+CREATE SEQUENCE IF NOT EXISTS task_submissions_id_seq START 1;
 CREATE TABLE IF NOT EXISTS task_submissions (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('task_submissions_id_seq'),
     prompt TEXT NOT NULL CHECK(length(trim(prompt)) > 0),
     submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -31,8 +32,9 @@ ON task_submissions(submitted_at DESC);
 
 # DDL for agent_executions table
 CREATE_AGENT_EXECUTIONS_TABLE = """
+CREATE SEQUENCE IF NOT EXISTS agent_executions_id_seq START 1;
 CREATE TABLE IF NOT EXISTS agent_executions (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('agent_executions_id_seq'),
     task_id INTEGER NOT NULL REFERENCES task_submissions(id),
     model_provider TEXT NOT NULL,
     model_name TEXT NOT NULL,
@@ -42,7 +44,7 @@ CREATE TABLE IF NOT EXISTS agent_executions (
     duration_seconds REAL,
     token_count INTEGER,
     all_messages JSON,
-    FOREIGN KEY (task_id) REFERENCES task_submissions(id) ON DELETE CASCADE
+    FOREIGN KEY (task_id) REFERENCES task_submissions(id)
 );
 """
 
@@ -63,13 +65,14 @@ ON agent_executions(started_at DESC);
 
 # DDL for evaluations table
 CREATE_EVALUATIONS_TABLE = """
+CREATE SEQUENCE IF NOT EXISTS evaluations_id_seq START 1;
 CREATE TABLE IF NOT EXISTS evaluations (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY DEFAULT nextval('evaluations_id_seq'),
     execution_id INTEGER NOT NULL REFERENCES agent_executions(id),
     score INTEGER NOT NULL CHECK(score >= 0 AND score <= 100),
     explanation TEXT NOT NULL CHECK(length(trim(explanation)) > 0),
     evaluated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (execution_id) REFERENCES agent_executions(id) ON DELETE CASCADE
+    FOREIGN KEY (execution_id) REFERENCES agent_executions(id)
 );
 """
 

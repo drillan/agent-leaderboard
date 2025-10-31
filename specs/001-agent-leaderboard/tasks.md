@@ -241,24 +241,24 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T067 [P] [US5] Integration test for historical executions query in tests/integration/test_database_persistence.py (multiple tasks, correct ordering)
-- [ ] T068 [US5] Integration test for historical leaderboard display in tests/integration/test_ui_integration.py (select past task → show results)
+- [x] T067 [P] [US5] Integration test for historical executions query in tests/integration/test_database_persistence.py (multiple tasks, correct ordering) ✅
+- [x] T068 [US5] Integration test for historical leaderboard display in tests/integration/test_ui_integration.py (select past task → show results) ✅
 
 ### Implementation for User Story 5
 
 **Database Queries**
 
-- [ ] T069 [US5] Implement TaskRepository.get_task_history() in src/database/repositories.py (list past tasks with metadata)
+- [x] T069 [US5] Implement TaskRepository.get_task_history() in src/database/repositories.py (list past tasks with metadata) ✅
 
 **UI Components**
 
-- [ ] T070 [P] [US5] Create history list component in src/ui/components/history_list.py (table of past tasks)
-- [ ] T071 [US5] Create history page in src/ui/pages/history.py (list + selection → show historical leaderboard)
+- [x] T070 [P] [US5] Create history list component in src/ui/components/history_list.py (table of past tasks) ✅
+- [x] T071 [US5] Create history page in src/ui/pages/history.py (list + selection → show historical leaderboard) ✅
 
 **UI Integration**
 
-- [ ] T072 [US5] Add history tab to main app in src/ui/app.py
-- [ ] T073 [US5] Integrate history page into app in src/ui/app.py
+- [x] T072 [US5] Add history tab to main app in src/ui/app.py ✅
+- [x] T073 [US5] Integrate history page into app in src/ui/app.py ✅
 
 **Checkpoint**: User Stories 1-5 functional - complete system with historical browsing
 

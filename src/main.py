@@ -13,6 +13,7 @@ from src.config.loader import ConfigLoader
 from src.database.connection import DatabaseConnection
 from src.ui.pages.main import create_main_page
 from src.ui.pages.performance import create_performance_page
+from src.ui.pages.settings import create_settings_page
 
 
 def parse_args() -> argparse.Namespace:
@@ -66,18 +67,58 @@ def main() -> None:
     """Main application entry point."""
     args = parse_args()
 
-    # Load configuration
+    # Load and validate configuration
     try:
         config_path = Path(args.config)
         if not config_path.exists():
-            print(f"Error: Configuration file not found: {args.config}", file=sys.stderr)
+            print(f"\n❌ Error: Configuration file not found: {args.config}", file=sys.stderr)
+            print(
+                "   Please create a config.toml file or specify an existing file with --config",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         config = ConfigLoader.load(config_path)
         print(f"✓ Configuration loaded from {args.config}")
 
+        # Validate configuration details
+        print("✓ Configuration validation:")
+        print(f"   - Task agents: {len(config.task_agents)} configured")
+        for i, agent in enumerate(config.task_agents, 1):
+            print(
+                f"     {i}. {agent.provider}/{agent.model} "
+                f"(API key: {agent.api_key_env})"
+            )
+
+        print(
+            f"   - Evaluation agent: "
+            f"{config.evaluation_agent.provider}/{config.evaluation_agent.model}"
+        )
+        print(f"   - Timeout: {config.execution.timeout_seconds}s")
+
+    except ValueError as e:
+        print("\n❌ Configuration validation error:", file=sys.stderr)
+        print(f"   {e}", file=sys.stderr)
+        print("\n   Common issues:", file=sys.stderr)
+        print(
+            f"   - Task agents: Must have 2-5 agents "
+            f"(not {len(getattr(config, 'task_agents', []))} agents)",
+            file=sys.stderr,
+        )
+        print(
+            "   - Duplicate models: Each agent must use a unique "
+            "provider/model combination",
+            file=sys.stderr,
+        )
+        print(
+            "   - API keys: All API key environment variables must be "
+            "set and non-empty",
+            file=sys.stderr,
+        )
+        print("   - Timeout: Must be between 1-600 seconds", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
-        print(f"Error loading configuration: {e}", file=sys.stderr)
+        print(f"\n❌ Error loading configuration: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Initialize database
@@ -99,6 +140,7 @@ def main() -> None:
         with ui.tabs().classes("w-full") as tabs:
             main_tab = ui.tab("Task Execution", icon="play_arrow")
             perf_tab = ui.tab("Performance", icon="bar_chart")
+            settings_tab = ui.tab("Settings", icon="settings")
 
         # Create tab panels
         with ui.tab_panels(tabs, value=main_tab).classes("w-full"):
@@ -107,6 +149,9 @@ def main() -> None:
 
             with ui.tab_panel(perf_tab):
                 create_performance_page(config, db)
+
+            with ui.tab_panel(settings_tab):
+                create_settings_page(config, args.config, db)
 
     # Run application
     print("\n🚀 Starting Multi-Agent Competition System")

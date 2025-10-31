@@ -204,28 +204,28 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T059 [P] [US4] Unit test for configuration validation in tests/unit/test_config.py (2-5 agents, valid providers, env vars exist)
-- [ ] T060 [US4] Integration test for settings UI persistence in tests/integration/test_ui_integration.py (UI save → TOML update)
+- [x] T059 [P] [US4] Unit test for configuration validation in tests/unit/test_config.py (2-5 agents, valid providers, env vars exist) ✅
+- [x] T060 [US4] Integration test for settings UI persistence in tests/integration/test_ui_integration.py (UI save → TOML update) ✅
 
 ### Implementation for User Story 4
 
 **Configuration Persistence**
 
-- [ ] T061 [US4] Implement ConfigLoader.save() in src/config/loader.py (write AppConfig to TOML)
+- [x] T061 [US4] Implement ConfigLoader.save() in src/config/loader.py (write AppConfig to TOML) ✅
 
 **UI Components**
 
-- [ ] T062 [P] [US4] Create settings form component in src/ui/components/settings.py (model selection dropdowns, provider selection)
-- [ ] T063 [US4] Create settings page in src/ui/pages/settings.py (load config, save to TOML on submit)
+- [x] T062 [P] [US4] Create settings form component in src/ui/components/settings.py (model selection dropdowns, provider selection) ✅
+- [x] T063 [US4] Create settings page in src/ui/pages/settings.py (load config, save to TOML on submit) ✅
 
 **UI Integration**
 
-- [ ] T064 [US4] Add settings tab to main app in src/ui/app.py
-- [ ] T065 [US4] Integrate settings page into app in src/ui/app.py
+- [x] T064 [US4] Add settings tab to main app in src/ui/app.py ✅
+- [x] T065 [US4] Integrate settings page into app in src/ui/app.py ✅
 
 **Configuration Validation**
 
-- [ ] T066 [US4] Add startup validation in src/main.py (validate config, display clear errors for invalid config)
+- [x] T066 [US4] Add startup validation in src/main.py (validate config, display clear errors for invalid config) ✅
 
 **Checkpoint**: User Stories 1-4 functional - full system with configurable AI models
 

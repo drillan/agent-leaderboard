@@ -214,3 +214,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+agent_leaderboard.duckdb*

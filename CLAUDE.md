@@ -226,3 +226,13 @@ if not data:
 - **Linting**: <linter> >= X.X.X
 - **型チェック**: <type-checker> >= X.X.X
 - **ドキュメント**: <doc-generator> >= X.X.X（オプション）
+
+## Active Technologies
+- Python 3.13+ (001-agent-leaderboard)
+- Pydantic AI with extras: pydantic-ai-slim[openai,anthropic,google] (agent framework with AI provider support) (001-agent-leaderboard)
+- NiceGUI (web UI framework) (001-agent-leaderboard)
+- DuckDB (local file-based database with JSON column support) (001-agent-leaderboard)
+- Plotly (visualization via NiceGUI integration) (001-agent-leaderboard)
+
+## Recent Changes
+- 001-agent-leaderboard: Updated to Python 3.13+, corrected Pydantic AI dependency to pydantic-ai-slim[openai,anthropic,google]

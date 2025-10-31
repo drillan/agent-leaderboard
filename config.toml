@@ -1,0 +1,41 @@
+# Multi-Agent Competition System Configuration
+# See .env.example for required environment variables
+
+[database]
+path = "agent_leaderboard.duckdb"
+
+[execution]
+timeout_seconds = 60
+
+[[task_agents]]
+provider = "openai"
+model = "gpt-4o-mini"
+api_key_env = "OPENAI_API_KEY"
+
+[[task_agents]]
+provider = "anthropic"
+model = "claude-sonnet-4-20250514"
+api_key_env = "ANTHROPIC_API_KEY"
+
+[evaluation_agent]
+provider = "openai"
+model = "gpt-4o-mini"
+api_key_env = "OPENAI_API_KEY"
+prompt = """You are evaluating the performance of an AI agent that completed a task.
+
+Task: {task_prompt}
+
+Agent's Response: {agent_response}
+
+Please evaluate the agent's response on the following criteria:
+1. Correctness: Did the agent correctly complete the task?
+2. Efficiency: Did the agent use tools appropriately?
+3. Completeness: Did the agent provide a complete answer?
+
+Provide:
+1. A score from 0-100 (where 100 is perfect)
+2. A brief explanation of your evaluation
+
+Response format:
+Score: [number]
+Explanation: [your explanation]"""

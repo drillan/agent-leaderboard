@@ -3,9 +3,12 @@ name = "agent-leaderboard"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
-    "pydantic-ai>=1.9.0",
+    "duckdb>=1.4.1",
+    "nicegui>=3.2.0",
+    "plotly>=6.3.1",
+    "pydantic-ai-slim[openai,anthropic,google]>=1.9.0",
 ]
 
 [dependency-groups]
@@ -19,4 +22,47 @@ docs = [
     "sphinx>=8.2.3",
     "sphinx-rtd-theme>=3.0.2",
     "sphinxcontrib-mermaid>=1.0.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = []
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+markers = [
+    "unit: Unit tests (fast, no external dependencies)",
+    "integration: Integration tests (moderate speed, may use mocks)",
+    "e2e: End-to-end tests (slow, uses real dependencies)",
 ]

@@ -9,6 +9,7 @@ dependencies = [
     "nicegui>=3.2.0",
     "plotly>=6.3.1",
     "pydantic-ai-slim[openai,anthropic,google]>=1.9.0",
+    "tomli-w>=1.2.0",
 ]
 
 [dependency-groups]

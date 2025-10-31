@@ -45,15 +45,15 @@
 
 ### Configuration Management
 
-- [ ] T011 [P] Create configuration Pydantic models in src/config/models.py (ModelConfig, ExecutionConfig, EvaluationConfig, AppConfig)
-- [ ] T012 [P] Implement TOML configuration loader in src/config/loader.py with validation
-- [ ] T013 [P] Create default configuration values in src/config/defaults.py (default eval prompt, timeout)
+- [X] T011 [P] Create configuration Pydantic models in src/config/models.py (ModelConfig, ExecutionConfig, EvaluationConfig, AppConfig)
+- [X] T012 [P] Implement TOML configuration loader in src/config/loader.py with validation
+- [X] T013 [P] Create default configuration values in src/config/defaults.py (default eval prompt, timeout)
 
 ### Database Foundation
 
-- [ ] T014 [P] Implement DuckDB connection management in src/database/connection.py
-- [ ] T015 [P] Define database schema (tables, indexes, views) in src/database/schema.py per data-model.md
-- [ ] T016 Implement database initialization logic (create tables, schema metadata) in src/database/connection.py
+- [X] T014 [P] Implement DuckDB connection management in src/database/connection.py
+- [X] T015 [P] Define database schema (tables, indexes, views) in src/database/schema.py per data-model.md
+- [X] T016 Implement database initialization logic (create tables, schema metadata) in src/database/connection.py
 
 ### Domain Models
 

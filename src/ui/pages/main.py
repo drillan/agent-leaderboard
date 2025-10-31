@@ -15,6 +15,10 @@ from src.execution.executor import execute_multi_agent
 from src.execution.state import MultiAgentExecutionState
 from src.models.execution import AgentExecution
 from src.models.task import TaskSubmission
+from src.ui.components.agent_responses import (
+    AgentResponsesPanel,
+    create_agent_responses_panel,
+)
 from src.ui.components.input_form import create_task_input_form
 from src.ui.components.leaderboard import LeaderboardTable, create_leaderboard_table
 from src.ui.components.status_display import (
@@ -43,9 +47,11 @@ class MainPage:
         self.status_display: ExecutionStatusDisplay | None = None
         self.leaderboard: LeaderboardTable | None = None
         self.tool_tree_panel: ToolCallTreePanel | None = None
+        self.agent_responses_panel: AgentResponsesPanel | None = None
         self.current_execution_state: MultiAgentExecutionState | None = None
         self.current_task_id: int | None = None
         self.current_executions: list[AgentExecution] = []
+        self.execution_scores: dict[int, int] = {}  # execution_id -> score mapping
         self.is_executing = False
 
     async def execute_task(self, prompt: str) -> None:
@@ -129,6 +135,7 @@ class MainPage:
                 pass
 
             evaluation_agent = create_evaluation_agent(self.config.evaluation_agent)
+            self.execution_scores = {}  # Reset scores for this task
 
             for execution in executions:
                 try:
@@ -145,6 +152,9 @@ class MainPage:
                         )
                         # Save evaluation to database
                         self.repository.create_evaluation(evaluation)
+                        # Store score mapping for UI display
+                        if execution.id:
+                            self.execution_scores[execution.id] = evaluation.score
                     else:
                         model_id = f"{execution.model_provider}/{execution.model_name}"
                         try:
@@ -181,6 +191,10 @@ class MainPage:
             if self.tool_tree_panel:
                 self.tool_tree_panel.update_executions(executions)
 
+            # Refresh agent responses panel
+            if self.agent_responses_panel:
+                self.agent_responses_panel.update_executions(executions, self.execution_scores)
+
         except Exception as e:
             try:
                 ui.notify(f"Execution failed: {str(e)}", type="negative")
@@ -208,6 +222,11 @@ class MainPage:
 
         # Tool call tree panel
         self.tool_tree_panel = create_tool_call_tree_panel(self.current_executions)
+
+        # Agent responses panel
+        self.agent_responses_panel = create_agent_responses_panel(
+            self.current_executions, self.execution_scores
+        )
 
 
 def create_main_page(config: AppConfig, db: DatabaseConnection) -> None:

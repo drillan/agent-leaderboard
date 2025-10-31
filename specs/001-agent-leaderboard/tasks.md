@@ -139,23 +139,23 @@
 
 **Evaluation Agent**
 
-- [ ] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
-- [ ] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
+- [x] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
+- [x] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
 
 **Tool Hierarchy Extraction**
 
-- [ ] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
+- [x] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
 
 **Database Queries**
 
-- [ ] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
-- [ ] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
+- [x] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
+- [x] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
 
 **UI Components**
 
-- [ ] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
-- [ ] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
-- [ ] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
+- [x] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
+- [x] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
+- [x] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
 
 **Checkpoint**: User Stories 1 AND 2 functional - complete workflow from task submission to evaluated, ranked leaderboard display
 

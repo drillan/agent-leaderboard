@@ -4,7 +4,8 @@ This module provides default values used when configuration is not
 fully specified or for fallback scenarios.
 """
 
-DEFAULT_EVALUATION_PROMPT = """You are evaluating the performance of an AI agent that completed a task.
+DEFAULT_EVALUATION_PROMPT = """You are evaluating the performance of an AI agent that \
+completed a task.
 
 Task: {task_prompt}
 

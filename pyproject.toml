@@ -41,7 +41,7 @@ select = [
     "C4",  # flake8-comprehensions
     "SIM", # flake8-simplify
 ]
-ignore = []
+ignore = ["UP047"]  # Generic function type parameters (Python 3.12+ feature)
 
 [tool.mypy]
 python_version = "3.13"

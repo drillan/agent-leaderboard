@@ -92,30 +92,30 @@
 
 **Task Agents Creation**
 
-- [ ] T029 [US1] Implement task agent factory in src/agents/task_agent.py (creates Agent with tools per model config)
+- [X] T029 [US1] Implement task agent factory in src/agents/task_agent.py (creates Agent with tools per model config)
 
 **Execution Orchestration**
 
-- [ ] T030 [US1] Implement timeout wrapper in src/execution/timeout.py using asyncio.wait_for()
-- [ ] T031 [US1] Create execution state tracker in src/execution/state.py (dataclass with agent statuses dict)
-- [ ] T032 [US1] Implement single agent executor in src/execution/executor.py with timeout handling (returns AgentRunResult | None)
-- [ ] T033 [US1] Implement parallel multi-agent executor in src/execution/executor.py using asyncio.gather()
+- [X] T030 [US1] Implement timeout wrapper in src/execution/timeout.py using asyncio.wait_for()
+- [X] T031 [US1] Create execution state tracker in src/execution/state.py (dataclass with agent statuses dict)
+- [X] T032 [US1] Implement single agent executor in src/execution/executor.py with timeout handling (returns AgentRunResult | None)
+- [X] T033 [US1] Implement parallel multi-agent executor in src/execution/executor.py using asyncio.gather()
 
 **Database Persistence**
 
-- [ ] T034 [US1] Implement TaskRepository.create_task() in src/database/repositories.py
-- [ ] T035 [US1] Implement TaskRepository.create_execution() in src/database/repositories.py
-- [ ] T036 [US1] Implement TaskRepository.update_execution_result() in src/database/repositories.py (stores all_messages_json)
+- [X] T034 [US1] Implement TaskRepository.create_task() in src/database/repositories.py
+- [X] T035 [US1] Implement TaskRepository.create_execution() in src/database/repositories.py
+- [X] T036 [US1] Implement TaskRepository.update_execution_result() in src/database/repositories.py (stores all_messages_json)
 
 **UI Components**
 
-- [ ] T037 [P] [US1] Create task input form component in src/ui/components/input_form.py (multi-line textarea + button)
-- [ ] T038 [P] [US1] Create execution status display component in src/ui/components/status_display.py (reactive labels)
-- [ ] T039 [US1] Implement main task execution page in src/ui/pages/main.py (integrates form + status + execution logic)
+- [X] T037 [P] [US1] Create task input form component in src/ui/components/input_form.py (multi-line textarea + button)
+- [X] T038 [P] [US1] Create execution status display component in src/ui/components/status_display.py (reactive labels)
+- [X] T039 [US1] Implement main task execution page in src/ui/pages/main.py (integrates form + status + execution logic)
 
 **Application Entry Point**
 
-- [ ] T040 [US1] Create main application entry point in src/main.py (load config, initialize DB, launch NiceGUI)
+- [X] T040 [US1] Create main application entry point in src/main.py (load config, initialize DB, launch NiceGUI)
 
 **Checkpoint**: User Story 1 fully functional - can submit tasks, see parallel execution with real-time status, results stored in DuckDB
 

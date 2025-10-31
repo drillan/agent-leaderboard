@@ -82,11 +82,11 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T024 [P] [US1] Unit test for tool implementations in tests/unit/test_tools.py (all 3 tools)
-- [ ] T025 [P] [US1] Unit test for configuration loading in tests/unit/test_config.py (valid/invalid cases)
-- [ ] T026 [P] [US1] Unit test for domain models validation in tests/unit/test_models.py
-- [ ] T027 [P] [US1] Integration test for task execution workflow in tests/integration/test_agent_execution.py (mock API calls)
-- [ ] T028 [US1] End-to-end test for full workflow in tests/e2e/test_full_workflow.py (submit → execute → store)
+- [X] T024 [P] [US1] Unit test for tool implementations in tests/unit/test_tools.py (all 3 tools)
+- [X] T025 [P] [US1] Unit test for configuration loading in tests/unit/test_config.py (valid/invalid cases)
+- [X] T026 [P] [US1] Unit test for domain models validation in tests/unit/test_models.py
+- [X] T027 [P] [US1] Integration test for task execution workflow in tests/integration/test_agent_execution.py (mock API calls)
+- [X] T028 [US1] End-to-end test for full workflow in tests/e2e/test_full_workflow.py (submit → execute → store)
 
 ### Implementation for User Story 1
 

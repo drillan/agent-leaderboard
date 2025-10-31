@@ -3,8 +3,6 @@
 This module provides the main UI page for task submission and execution.
 """
 
-import asyncio
-
 from nicegui import ui
 
 from src.agents.eval_agent import create_evaluation_agent

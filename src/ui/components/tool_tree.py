@@ -142,37 +142,55 @@ class ToolCallTreePanel:
         self.container: ui.card | None = None
         self.tree_component: ToolCallTree | None = None
 
+    def _create_ui_content(self) -> None:
+        """Create UI content for the tool call tree panel.
+
+        This is used both by create() for initial setup and update_executions()
+        for updating with new data.
+        """
+        if not self.executions:
+            ui.label("No executions available").classes("text-grey-6")
+            return
+
+        # Create execution selector
+        execution_options = {
+            f"{exec.model_provider}/{exec.model_name}": exec for exec in self.executions
+        }
+
+        # Auto-select first execution if only one is available
+        if len(self.executions) == 1:
+            first_label = list(execution_options.keys())[0]
+            self.selected_execution = execution_options[first_label]
+
+        def on_select(e: ValueChangeEventArguments) -> None:
+            selected_label = e.value
+            if selected_label and selected_label in execution_options:
+                self.selected_execution = execution_options[selected_label]
+                if self.tree_component:
+                    self.tree_component.update_execution(self.selected_execution)
+
+        # Create selector with auto-selected value if available
+        select_widget = ui.select(
+            options=list(execution_options.keys()),
+            label="Select Execution",
+            on_change=on_select,
+        ).classes("w-full")
+
+        # Set the default selection if we have a pre-selected execution
+        if self.selected_execution:
+            default_label = f"{self.selected_execution.model_provider}/{self.selected_execution.model_name}"
+            select_widget.value = default_label
+
+        # Create tree component
+        self.tree_component = ToolCallTree(self.selected_execution)
+        self.tree_component.create()
+
     def create(self) -> None:
         """Create the tool call tree panel UI component."""
         with ui.card().classes("w-full") as card:
             self.container = card
             ui.label("Tool Call Analysis").classes("text-h6")
-
-            if not self.executions:
-                ui.label("No executions available").classes("text-grey-6")
-                return
-
-            # Create execution selector
-            execution_options = {
-                f"{exec.model_provider}/{exec.model_name}": exec for exec in self.executions
-            }
-
-            def on_select(e: ValueChangeEventArguments) -> None:
-                selected_label = e.value
-                if selected_label and selected_label in execution_options:
-                    self.selected_execution = execution_options[selected_label]
-                    if self.tree_component:
-                        self.tree_component.update_execution(self.selected_execution)
-
-            ui.select(
-                options=list(execution_options.keys()),
-                label="Select Execution",
-                on_change=on_select,
-            ).classes("w-full")
-
-            # Create tree component
-            self.tree_component = ToolCallTree(self.selected_execution)
-            self.tree_component.create()
+            self._create_ui_content()
 
     def update_executions(self, executions: list[AgentExecution]) -> None:
         """Update the panel with new list of executions.
@@ -186,7 +204,7 @@ class ToolCallTreePanel:
             self.container.clear()
             with self.container:
                 ui.label("Tool Call Analysis").classes("text-h6")
-                self.create()
+                self._create_ui_content()
 
 
 def create_tool_call_tree(execution: AgentExecution | None = None) -> ToolCallTree:

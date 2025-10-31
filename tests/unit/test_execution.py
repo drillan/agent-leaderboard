@@ -4,14 +4,54 @@ Tests for tool hierarchy extraction and execution helpers.
 """
 
 import json
+from src.execution.executor import extract_tool_hierarchy
+from src.models.execution import AgentExecution
 
 
 class TestToolHierarchyExtraction:
     """Tests for tool call hierarchy extraction from all_messages."""
 
+    def test_extract_single_tool_call_pydantic_ai_format(self) -> None:
+        """Test extracting a single tool call from Pydantic AI v1.9.0 message format."""
+        # Pydantic AI v1.9.0 message format with kind/part_kind structure
+        messages = [
+            {"kind": "request", "parts": [{"part_kind": "user-prompt", "content": "Check if 17 is prime"}]},
+            {
+                "kind": "response",
+                "parts": [
+                    {
+                        "part_kind": "tool-call",
+                        "tool_name": "check_prime",
+                        "args": {"n": 17},
+                        "call_id": "call_1",
+                    },
+                    {
+                        "part_kind": "tool-return",
+                        "content": {"is_prime": True, "reason": "17 is prime"},
+                        "call_id": "call_1",
+                    },
+                ],
+            },
+        ]
+
+        execution = AgentExecution(
+            task_id=1,
+            model_provider="test",
+            model_name="test_model",
+            all_messages_json=json.dumps(messages),
+        )
+
+        nodes = extract_tool_hierarchy(execution)
+
+        assert len(nodes) == 1
+        assert nodes[0]["tool_name"] == "check_prime"
+        assert nodes[0]["args"] == {"n": 17}
+        assert nodes[0]["result"] == {"is_prime": True, "reason": "17 is prime"}
+        assert nodes[0]["children"] == []
+
     def test_extract_single_tool_call(self) -> None:
         """Test extracting a single tool call from messages."""
-        # Sample all_messages_json with one tool call
+        # Sample all_messages_json with one tool call (legacy format for reference)
         json.dumps(
             [
                 {"role": "user", "content": "Check if 17 is prime"},
@@ -35,40 +75,52 @@ class TestToolHierarchyExtraction:
         assert True  # Placeholder
 
     def test_extract_multiple_sequential_tool_calls(self) -> None:
-        """Test extracting multiple sequential (non-nested) tool calls."""
-        json.dumps(
-            [
-                {"role": "user", "content": "Check if 17 is prime and get datetime"},
-                {
-                    "role": "tool_call",
-                    "tool_name": "check_prime",
-                    "args": {"n": 17},
-                    "call_id": "call_1",
-                },
-                {
-                    "role": "tool_response",
-                    "tool_name": "check_prime",
-                    "content": {"is_prime": True},
-                    "call_id": "call_1",
-                },
-                {
-                    "role": "tool_call",
-                    "tool_name": "get_datetime",
-                    "args": {},
-                    "call_id": "call_2",
-                },
-                {
-                    "role": "tool_response",
-                    "tool_name": "get_datetime",
-                    "content": "2025-10-31T10:00:00",
-                    "call_id": "call_2",
-                },
-            ]
+        """Test extracting multiple sequential (non-nested) tool calls in Pydantic AI format."""
+        messages = [
+            {"kind": "request", "parts": [{"part_kind": "user-prompt", "content": "Check if 17 is prime and get datetime"}]},
+            {
+                "kind": "response",
+                "parts": [
+                    {
+                        "part_kind": "tool-call",
+                        "tool_name": "check_prime",
+                        "args": {"n": 17},
+                        "call_id": "call_1",
+                    },
+                    {
+                        "part_kind": "tool-return",
+                        "content": {"is_prime": True},
+                        "call_id": "call_1",
+                    },
+                    {
+                        "part_kind": "tool-call",
+                        "tool_name": "get_datetime",
+                        "args": {},
+                        "call_id": "call_2",
+                    },
+                    {
+                        "part_kind": "tool-return",
+                        "content": "2025-10-31T10:00:00",
+                        "call_id": "call_2",
+                    },
+                ],
+            },
+        ]
+
+        execution = AgentExecution(
+            task_id=1,
+            model_provider="test",
+            model_name="test_model",
+            all_messages_json=json.dumps(messages),
         )
 
-        # Expected: two root-level tool calls
+        nodes = extract_tool_hierarchy(execution)
 
-        assert True  # Placeholder
+        # Expected: two root-level tool calls
+        assert len(nodes) == 2
+        assert nodes[0]["tool_name"] == "check_prime"
+        assert nodes[1]["tool_name"] == "get_datetime"
+        assert nodes[1]["result"] == "2025-10-31T10:00:00"
 
     def test_extract_nested_tool_calls(self) -> None:
         """Test extracting nested tool calls (tool calling another tool)."""
@@ -108,39 +160,63 @@ class TestToolHierarchyExtraction:
         assert True  # Placeholder
 
     def test_extract_tool_calls_with_no_tools(self) -> None:
-        """Test extracting from messages with no tool calls."""
-        json.dumps(
-            [
-                {"role": "user", "content": "Hello"},
-                {"role": "assistant", "content": "Hi there!"},
-            ]
+        """Test extracting from messages with no tool calls in Pydantic AI format."""
+        messages = [
+            {"kind": "request", "parts": [{"part_kind": "user-prompt", "content": "Hello"}]},
+            {
+                "kind": "response",
+                "parts": [
+                    {"part_kind": "text", "content": "Hi there!"},
+                ],
+            },
+        ]
+
+        execution = AgentExecution(
+            task_id=1,
+            model_provider="test",
+            model_name="test_model",
+            all_messages_json=json.dumps(messages),
         )
+
+        nodes = extract_tool_hierarchy(execution)
 
         # Expected: empty tool call list
-
-        assert True  # Placeholder
+        assert len(nodes) == 0
 
     def test_extract_tool_calls_with_failed_tool(self) -> None:
-        """Test extracting tool calls when a tool execution fails."""
-        json.dumps(
-            [
-                {
-                    "role": "tool_call",
-                    "tool_name": "check_prime",
-                    "args": {"n": -5},
-                    "call_id": "call_1",
-                },
-                {
-                    "role": "tool_response",
-                    "tool_name": "check_prime",
-                    "content": {"error": "Number must be >= 2"},
-                    "call_id": "call_1",
-                },
-            ]
+        """Test extracting tool calls when a tool execution fails in Pydantic AI format."""
+        messages = [
+            {
+                "kind": "response",
+                "parts": [
+                    {
+                        "part_kind": "tool-call",
+                        "tool_name": "check_prime",
+                        "args": {"n": -5},
+                        "call_id": "call_1",
+                    },
+                    {
+                        "part_kind": "tool-return",
+                        "content": {"error": "Number must be >= 2"},
+                        "call_id": "call_1",
+                    },
+                ],
+            },
+        ]
+
+        execution = AgentExecution(
+            task_id=1,
+            model_provider="test",
+            model_name="test_model",
+            all_messages_json=json.dumps(messages),
         )
 
+        nodes = extract_tool_hierarchy(execution)
+
         # Expected: tool call with error in result
-        assert True  # Placeholder
+        assert len(nodes) == 1
+        assert nodes[0]["tool_name"] == "check_prime"
+        assert nodes[0]["result"] == {"error": "Number must be >= 2"}
 
 
 class TestToolCallTreeStructure:

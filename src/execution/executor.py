@@ -249,6 +249,8 @@ def extract_tool_hierarchy(execution: AgentExecution) -> list[ToolCallNode]:
     Parses the all_messages_json to build a tree structure of tool calls,
     including nested calls and their results.
 
+    Handles Pydantic AI v1.9.0 message format with kind/part_kind structure.
+
     Args:
         execution: Agent execution with all_messages_json
 
@@ -270,32 +272,46 @@ def extract_tool_hierarchy(execution: AgentExecution) -> list[ToolCallNode]:
         # Handle error dict format
         return []
 
-    # Extract tool calls and responses
+    # Extract tool calls and responses from Pydantic AI v1.9.0 format
     tool_calls: dict[str, dict[str, Any]] = {}  # call_id -> tool call info
     tool_responses: dict[str, Any] = {}  # call_id -> result
+    call_counter = 0  # Auto-generate call IDs if not provided
 
     for msg in messages:
         if not isinstance(msg, dict):
             continue
 
-        role = msg.get("role", "")
+        # Pydantic AI v1.9.0 uses "kind" field: "request", "response"
+        kind = msg.get("kind", "")
+        parts = msg.get("parts", [])
 
-        if role == "tool_call":
-            call_id = msg.get("call_id", "")
-            if call_id:
-                tool_calls[call_id] = {
-                    "tool_name": msg.get("tool_name", "unknown"),
-                    "args": msg.get("args", {}),
-                    "call_id": call_id,
-                    "parent_id": msg.get("parent_id"),  # For nested calls
-                }
+        if kind == "response" and isinstance(parts, list):
+            for part in parts:
+                if not isinstance(part, dict):
+                    continue
 
-        elif role == "tool_response":
-            call_id = msg.get("call_id", "")
-            if call_id:
-                tool_responses[call_id] = msg.get("content", {})
+                part_kind = part.get("part_kind", "")
 
-    # Build hierarchy
+                # Handle tool calls
+                if part_kind == "tool-call":
+                    call_counter += 1
+                    # Use existing call_id or generate one
+                    call_id = part.get("call_id", f"call_{call_counter}")
+                    tool_calls[call_id] = {
+                        "tool_name": part.get("tool_name", "unknown"),
+                        "args": part.get("args", {}),
+                        "call_id": call_id,
+                        "parent_id": None,  # Pydantic AI doesn't use parent_id structure
+                    }
+
+                # Handle tool responses
+                elif part_kind == "tool-return":
+                    call_id = part.get("call_id", f"call_{call_counter}")
+                    # Tool return may have result or content field
+                    result = part.get("content") or part.get("result", {})
+                    tool_responses[call_id] = result
+
+    # Build hierarchy (flat structure for Pydantic AI - no nesting)
     nodes: dict[str, ToolCallNode] = {}
     root_nodes: list[ToolCallNode] = []
 
@@ -310,11 +326,11 @@ def extract_tool_hierarchy(execution: AgentExecution) -> list[ToolCallNode]:
         }
         nodes[call_id] = node
 
-        # If no parent, it's a root node
+        # In Pydantic AI format, all tool calls are root-level (no parent_id)
         if not call_info.get("parent_id"):
             root_nodes.append(node)
 
-    # Link children to parents
+    # Link children to parents (if parent_id exists)
     for call_id, call_info in tool_calls.items():
         parent_id = call_info.get("parent_id")
         if parent_id and parent_id in nodes:

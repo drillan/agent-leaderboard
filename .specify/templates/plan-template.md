@@ -31,7 +31,43 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+The following constitutional principles MUST be verified:
+
+### I. Test-Driven Development (NON-NEGOTIABLE)
+- [ ] Tests MUST be written before implementation
+- [ ] Tests MUST be approved by user before implementation
+- [ ] Red-Green-Refactor cycle MUST be followed
+- [ ] One feature = one test file mapping confirmed
+
+### II. Code-Specification Consistency
+- [ ] Specifications reviewed and unambiguous
+- [ ] Documentation changes approved by user
+- [ ] No implementation until specifications complete
+
+### III. Code Quality Standards
+- [ ] `ruff check .` passes with zero violations
+- [ ] `ruff format .` applied
+- [ ] `mypy .` passes with zero errors
+- [ ] All functions/methods/variables have type annotations
+- [ ] No `Any` types used (or justified exceptions documented)
+
+### IV. Data Accuracy
+- [ ] No magic numbers or hard-coded strings
+- [ ] No environment-dependent values embedded
+- [ ] No credentials or API keys in code
+- [ ] All fixed values defined as named constants
+- [ ] Configuration centrally managed
+- [ ] Errors handled explicitly (exceptions raised)
+
+### V. DRY (Don't Repeat Yourself)
+- [ ] Existing implementations searched (Glob/Grep)
+- [ ] No duplicate code patterns (3+ repetitions)
+- [ ] Reusable components identified
+
+### VI. Refactoring Policy
+- [ ] No versioned classes (V2, V3) created
+- [ ] Existing code modified directly
+- [ ] Impact analysis completed (dependencies, tests, docs)
 
 ## Project Structure
 

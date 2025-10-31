@@ -113,3 +113,25 @@
 - **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+
+## Quality Gates *(mandatory per constitution)*
+
+### Code Quality Requirements
+- [ ] All code passes `ruff check .` with zero violations
+- [ ] All code passes `ruff format .` (formatting applied)
+- [ ] All code passes `mypy .` with zero type errors
+- [ ] All public functions/classes have Google-style docstrings
+- [ ] All functions/methods/variables have type annotations
+
+### Test-Driven Development Requirements
+- [ ] Tests written BEFORE implementation
+- [ ] Tests approved by user BEFORE implementation
+- [ ] Red-Green-Refactor cycle followed
+- [ ] Test file naming matches feature (e.g., `test_feature.py` for `feature.py`)
+
+### Data Accuracy Requirements
+- [ ] No magic numbers (all constants named)
+- [ ] No hard-coded configuration values
+- [ ] No credentials in code
+- [ ] Configuration centrally managed
+- [ ] Explicit error handling (no silent failures)

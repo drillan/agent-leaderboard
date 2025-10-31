@@ -3,6 +3,8 @@
 This module provides the main UI page for task submission and execution.
 """
 
+import logging
+
 from nicegui import ui
 
 from src.agents.eval_agent import create_evaluation_agent
@@ -26,6 +28,8 @@ from src.ui.components.status_display import (
     create_execution_status_display,
 )
 from src.ui.components.tool_tree import ToolCallTreePanel, create_tool_call_tree_panel
+
+logger = logging.getLogger(__name__)
 
 
 class MainPage:
@@ -60,7 +64,10 @@ class MainPage:
         Args:
             prompt: Task prompt to execute
         """
+        logger.info(f"execute_task called with prompt: {prompt[:50]}...")
+
         if self.is_executing:
+            logger.warning("Execution already in progress, skipping")
             try:
                 ui.notify("An execution is already in progress", type="warning")
             except Exception:
@@ -68,6 +75,7 @@ class MainPage:
             return
 
         self.is_executing = True
+        logger.info("Starting task execution")
 
         try:
             # Create task submission
@@ -196,12 +204,14 @@ class MainPage:
                 self.agent_responses_panel.update_executions(executions, self.execution_scores)
 
         except Exception as e:
+            logger.error(f"Execution failed: {e}", exc_info=True)
             try:
                 ui.notify(f"Execution failed: {str(e)}", type="negative")
-            except Exception:
-                pass
+            except Exception as notify_error:
+                logger.error(f"Failed to show notification: {notify_error}")
 
         finally:
+            logger.info("Task execution completed, resetting is_executing flag")
             self.is_executing = False
 
     def create(self) -> None:

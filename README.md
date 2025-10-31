@@ -1,6 +1,18 @@
+---
+title: Multi-Agent Competition System
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
+
 # Multi-Agent Competition System
 
 A comprehensive system for executing tasks across multiple AI models, evaluating their performance, and visualizing results in an interactive leaderboard.
+
+> **Hugging Face Spaces**: This application is ready to deploy on Hugging Face Spaces. See [plans/huggingface-deployment.md](plans/huggingface-deployment.md) for deployment instructions.
 
 ## Features
 

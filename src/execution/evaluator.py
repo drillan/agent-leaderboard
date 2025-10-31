@@ -42,6 +42,12 @@ async def evaluate_execution(
         TimeoutError: If evaluation exceeds timeout_seconds
         Exception: If evaluation agent execution fails
     """
+    print(f"\n=== STARTING EVALUATION ===")
+    print(f"Execution ID: {execution.id}")
+    print(f"Task prompt: {task_prompt[:100]}")
+    print(f"Agent response length: {len(agent_response)}")
+    print(f"Agent response: {agent_response[:200]}")
+
     # Create evaluation prompt combining task and agent response
     evaluation_prompt = f"""
 Task Prompt:

@@ -56,7 +56,10 @@ class MainPage:
             prompt: Task prompt to execute
         """
         if self.is_executing:
-            ui.notify("An execution is already in progress", type="warning")
+            try:
+                ui.notify("An execution is already in progress", type="warning")
+            except Exception:
+                pass
             return
 
         self.is_executing = True
@@ -66,7 +69,10 @@ class MainPage:
             task = TaskSubmission(prompt=prompt)
             task_id = self.repository.create_task(task)
 
-            ui.notify(f"Task submitted (ID: {task_id})", type="positive")
+            try:
+                ui.notify(f"Task submitted (ID: {task_id})", type="positive")
+            except Exception:
+                pass
 
             # Create execution state tracker
             self.current_execution_state = MultiAgentExecutionState(task_id=task_id)
@@ -109,13 +115,20 @@ class MainPage:
             failed = self.current_execution_state.get_failed_count()
             total = len(self.config.task_agents)
 
-            ui.notify(
-                f"Execution complete: {completed}/{total} succeeded, {failed}/{total} failed",
-                type="positive" if completed > 0 else "warning",
-            )
+            try:
+                ui.notify(
+                    f"Execution complete: {completed}/{total} succeeded, {failed}/{total} failed",
+                    type="positive" if completed > 0 else "warning",
+                )
+            except Exception:
+                pass
 
             # Run evaluations
-            ui.notify("Running evaluations...", type="info")
+            try:
+                ui.notify("Running evaluations...", type="info")
+            except Exception:
+                pass
+
             evaluation_agent = create_evaluation_agent(self.config.evaluation_agent)
 
             for execution in executions:
@@ -130,12 +143,18 @@ class MainPage:
                     self.repository.create_evaluation(evaluation)
                 except Exception as e:
                     model_id = f"{execution.model_provider}/{execution.model_name}"
-                    ui.notify(
-                        f"Evaluation failed for {model_id}: {e}",
-                        type="warning",
-                    )
+                    try:
+                        ui.notify(
+                            f"Evaluation failed for {model_id}: {e}",
+                            type="warning",
+                        )
+                    except Exception:
+                        pass
 
-            ui.notify("Evaluations complete!", type="positive")
+            try:
+                ui.notify("Evaluations complete!", type="positive")
+            except Exception:
+                pass
 
             # Store current task and executions
             self.current_task_id = task_id
@@ -150,7 +169,10 @@ class MainPage:
                 self.tool_tree_panel.update_executions(executions)
 
         except Exception as e:
-            ui.notify(f"Execution failed: {str(e)}", type="negative")
+            try:
+                ui.notify(f"Execution failed: {str(e)}", type="negative")
+            except Exception:
+                pass
 
         finally:
             self.is_executing = False
@@ -160,8 +182,8 @@ class MainPage:
         ui.label("Multi-Agent Competition System").classes("text-h4 text-center")
 
         # Task input form
-        def handle_submit(prompt: str) -> None:
-            asyncio.create_task(self.execute_task(prompt))
+        async def handle_submit(prompt: str) -> None:
+            await self.execute_task(prompt)
 
         create_task_input_form(on_submit=handle_submit)
 

@@ -70,6 +70,13 @@ Explanation: [your explanation]
         # Extract response text from Pydantic AI result
         # The result object has various attributes, try to extract the text response
         response_text = ""
+
+        # Use print for guaranteed output to logs
+        print(f"\n=== EVALUATION RESULT DEBUG ===")
+        print(f"Result type: {type(result)}")
+        print(f"Result: {result}")
+        print(f"Result attributes: {[a for a in dir(result) if not a.startswith('_')]}")
+
         logger.debug(f"Result type: {type(result)}, Result: {result}")
         logger.debug(f"Result attributes: {dir(result)}")
 
@@ -77,8 +84,12 @@ Explanation: [your explanation]
         try:
             if hasattr(result, "data"):
                 response_text = str(result.data)
+                print(f"✓ Extracted text using result.data: {response_text[:100]}")
                 logger.debug(f"Extracted text using result.data: {response_text[:100]}")
+            else:
+                print(f"✗ No 'data' attribute")
         except Exception as e:
+            print(f"✗ Error extracting from result.data: {e}")
             logger.debug(f"Could not extract from result.data: {e}")
 
         # Method 2: Try to convert result to string
@@ -86,8 +97,12 @@ Explanation: [your explanation]
             try:
                 response_text = str(result).strip()
                 if response_text and response_text != "":
+                    print(f"✓ Extracted text using str(): {response_text[:100]}")
                     logger.debug(f"Extracted text using str(): {response_text[:100]}")
+                else:
+                    print(f"✗ str(result) is empty")
             except Exception as e:
+                print(f"✗ Error converting result to string: {e}")
                 logger.debug(f"Could not convert result to string: {e}")
 
         # Method 3: Try to parse from all_messages_json
@@ -96,7 +111,10 @@ Explanation: [your explanation]
                 messages_json = result.all_messages_json().decode("utf-8")
                 # Extract text from the final response message
                 messages = json.loads(messages_json)
+                print(f"✓ Parsed {len(messages)} messages from all_messages_json")
                 logger.debug(f"Parsed {len(messages)} messages from all_messages_json")
+                print(f"  Messages: {json.dumps(messages, indent=2)[:500]}...")
+
                 # Look for the last response message with text content
                 for message in reversed(messages):
                     if isinstance(message, dict) and message.get("kind") == "response":
@@ -107,6 +125,7 @@ Explanation: [your explanation]
                                     content = part.get("content", "")
                                     if content and not isinstance(content, dict):
                                         response_text = content
+                                        print(f"✓ Extracted from messages: {response_text[:100]}")
                                         logger.debug(
                                             f"Extracted from messages: {response_text[:100]}"
                                         )
@@ -114,6 +133,7 @@ Explanation: [your explanation]
                         if response_text:
                             break
             except Exception as e:
+                print(f"✗ Error extracting from messages: {e}")
                 logger.debug(f"Could not extract from messages: {e}")
 
         if not response_text:

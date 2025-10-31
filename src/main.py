@@ -17,11 +17,19 @@ from src.ui.pages.main import create_main_page
 from src.ui.pages.performance import create_performance_page
 from src.ui.pages.settings import create_settings_page
 
-# Configure logging
+# Configure logging - both console and file
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format=log_format,
 )
+
+# Add file handler for detailed logging
+log_file = Path("agent_leaderboard.log")
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(log_format))
+logging.getLogger().addHandler(file_handler)
 
 
 def parse_args() -> argparse.Namespace:

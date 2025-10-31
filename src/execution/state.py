@@ -107,9 +107,7 @@ class MultiAgentExecutionState:
             ExecutionStatus.TIMEOUT,
         }
 
-        return all(
-            state.status in terminal_statuses for state in self.agent_states.values()
-        )
+        return all(state.status in terminal_statuses for state in self.agent_states.values())
 
     def get_completed_count(self) -> int:
         """Get the number of agents that have completed successfully.
@@ -118,9 +116,7 @@ class MultiAgentExecutionState:
             Count of agents with COMPLETED status
         """
         return sum(
-            1
-            for state in self.agent_states.values()
-            if state.status == ExecutionStatus.COMPLETED
+            1 for state in self.agent_states.values() if state.status == ExecutionStatus.COMPLETED
         )
 
     def get_failed_count(self) -> int:

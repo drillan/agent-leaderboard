@@ -24,10 +24,14 @@ def create_task_input_form(on_submit: Callable[[str], None]) -> None:
         ui.label("Task Prompt").classes("text-h6")
 
         # Multi-line textarea for prompt input
-        prompt_input = ui.textarea(
-            label="Enter your task description",
-            placeholder="Example: Check if 17 is a prime number",
-        ).classes("w-full").props("rows=5")
+        prompt_input = (
+            ui.textarea(
+                label="Enter your task description",
+                placeholder="Example: Check if 17 is a prime number",
+            )
+            .classes("w-full")
+            .props("rows=5")
+        )
 
         # Submit button
         def handle_click() -> None:

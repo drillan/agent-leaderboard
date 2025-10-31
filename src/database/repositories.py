@@ -317,3 +317,111 @@ class TaskRepository:
             )
 
         return leaderboard
+
+    def get_performance_metrics(self, task_id: int | None = None) -> list[dict[str, object]]:
+        """Get performance metrics for agent executions.
+
+        Args:
+            task_id: Optional task ID to filter by. If None, returns metrics for all tasks.
+
+        Returns:
+            List of dictionaries with performance metrics data
+        """
+        conn = self.db.connect()
+
+        if task_id is not None:
+            # Query metrics for specific task
+            results = conn.execute(
+                """
+                SELECT
+                    id,
+                    duration_seconds,
+                    token_count,
+                    model_provider,
+                    model_name
+                FROM agent_executions
+                WHERE task_id = ?
+                  AND status IN ('completed', 'timeout')
+                  AND duration_seconds IS NOT NULL
+                  AND duration_seconds > 0
+                ORDER BY model_provider, model_name
+                """,
+                [task_id],
+            ).fetchall()
+        else:
+            # Query metrics for all tasks
+            results = conn.execute(
+                """
+                SELECT
+                    id,
+                    duration_seconds,
+                    token_count,
+                    model_provider,
+                    model_name
+                FROM agent_executions
+                WHERE status IN ('completed', 'timeout')
+                  AND duration_seconds IS NOT NULL
+                  AND duration_seconds > 0
+                ORDER BY model_provider, model_name
+                """
+            ).fetchall()
+
+        metrics = []
+        for row in results:
+            metrics.append(
+                {
+                    "execution_id": row[0],
+                    "duration_seconds": row[1],
+                    "token_count": row[2],
+                    "model_provider": row[3],
+                    "model_name": row[4],
+                }
+            )
+
+        return metrics
+
+    def get_task_history(self) -> list[dict[str, object]]:
+        """Get all task submissions with execution summary.
+
+        Returns task history ordered by created_at descending (newest first).
+        Each task includes:
+        - id: Task ID
+        - prompt: Task prompt text
+        - submitted_at: Timestamp when task was submitted
+        - execution_count: Number of executions for this task
+        - highest_score: Highest evaluation score (None if no evaluations)
+
+        Returns:
+            List of dictionaries with task history data
+        """
+        conn = self.db.connect()
+
+        results = conn.execute(
+            """
+            SELECT
+                t.id,
+                t.prompt,
+                t.submitted_at,
+                COUNT(e.id) as execution_count,
+                MAX(ev.score) as highest_score
+            FROM task_submissions t
+            LEFT JOIN agent_executions e ON t.id = e.task_id
+            LEFT JOIN evaluation_results ev ON e.id = ev.execution_id
+            GROUP BY t.id, t.prompt, t.submitted_at
+            ORDER BY t.submitted_at DESC
+            """
+        ).fetchall()
+
+        history = []
+        for row in results:
+            history.append(
+                {
+                    "id": row[0],
+                    "prompt": row[1],
+                    "submitted_at": row[2],
+                    "execution_count": row[3],
+                    "highest_score": row[4],
+                }
+            )
+
+        return history

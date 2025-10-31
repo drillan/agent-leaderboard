@@ -131,31 +131,31 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
-- [ ] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
-- [ ] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
+- [X] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
+- [X] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
+- [X] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
 
 ### Implementation for User Story 2
 
 **Evaluation Agent**
 
-- [ ] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
-- [ ] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
+- [X] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
+- [X] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
 
 **Tool Hierarchy Extraction**
 
-- [ ] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
+- [X] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
 
 **Database Queries**
 
-- [ ] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
-- [ ] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
+- [X] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
+- [X] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
 
 **UI Components**
 
-- [ ] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
-- [ ] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
-- [ ] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
+- [X] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
+- [X] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
+- [X] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
 
 **Checkpoint**: User Stories 1 AND 2 functional - complete workflow from task submission to evaluated, ranked leaderboard display
 

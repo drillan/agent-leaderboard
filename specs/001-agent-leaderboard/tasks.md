@@ -171,24 +171,24 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T052 [P] [US3] Unit test for performance metrics calculation in tests/unit/test_models.py (duration, token count)
-- [ ] T053 [US3] Integration test for performance metrics query in tests/integration/test_database_persistence.py (aggregate query)
+- [x] T052 [P] [US3] Unit test for performance metrics calculation in tests/unit/test_models.py (duration, token count)
+- [x] T053 [US3] Integration test for performance metrics query in tests/integration/test_database_persistence.py (aggregate query)
 
 ### Implementation for User Story 3
 
 **Database Queries**
 
-- [ ] T054 [US3] Implement TaskRepository.get_performance_metrics() in src/database/repositories.py (aggregate query for charts)
+- [x] T054 [US3] Implement TaskRepository.get_performance_metrics() in src/database/repositories.py (aggregate query for charts)
 
 **UI Components**
 
-- [ ] T055 [P] [US3] Create performance charts component in src/ui/components/charts.py (Plotly bar charts via ui.plotly())
-- [ ] T056 [US3] Create performance dashboard page in src/ui/pages/performance.py (duration chart + token chart)
+- [x] T055 [P] [US3] Create performance charts component in src/ui/components/charts.py (Plotly bar charts via ui.plotly())
+- [x] T056 [US3] Create performance dashboard page in src/ui/pages/performance.py (duration chart + token chart)
 
 **UI Integration**
 
-- [ ] T057 [US3] Add tab navigation to main app in src/ui/app.py (main tab + performance tab)
-- [ ] T058 [US3] Integrate performance page into app in src/ui/app.py
+- [x] T057 [US3] Add tab navigation to main app in src/main.py (main tab + performance tab)
+- [x] T058 [US3] Integrate performance page into app in src/main.py
 
 **Checkpoint**: User Stories 1, 2, AND 3 functional - complete system with task execution, evaluation, and performance analysis
 

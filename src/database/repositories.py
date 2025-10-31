@@ -408,7 +408,7 @@ class TaskRepository:
                 MAX(ev.score) as highest_score
             FROM task_submissions t
             LEFT JOIN agent_executions e ON t.id = e.task_id
-            LEFT JOIN evaluation_results ev ON e.id = ev.execution_id
+            LEFT JOIN evaluations ev ON e.id = ev.execution_id
             GROUP BY t.id, t.prompt, t.submitted_at
             ORDER BY t.submitted_at DESC
             """

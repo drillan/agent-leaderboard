@@ -10,7 +10,7 @@ from datetime import datetime
 
 from pydantic_ai import Agent
 
-from src.config.models import EvaluationConfig
+from src.config.models import EvaluationConfig, get_pydantic_ai_provider
 from src.models.evaluation import EvaluationResult
 
 
@@ -32,8 +32,9 @@ def create_evaluation_agent(config: EvaluationConfig) -> Agent:
     if not api_key:
         raise ValueError(f"API key environment variable {config.api_key_env} not set")
 
-    # Construct model string based on provider
-    model_string = f"{config.provider}:{config.model}"
+    # Map user-friendly provider name to Pydantic AI provider
+    pydantic_ai_provider = get_pydantic_ai_provider(config.provider)
+    model_string = f"{pydantic_ai_provider}{config.model}"
 
     # Create agent without tools (evaluation agent doesn't need tools)
     agent = Agent(

@@ -317,3 +317,65 @@ class TaskRepository:
             )
 
         return leaderboard
+
+    def get_performance_metrics(self, task_id: int | None = None) -> list[dict[str, object]]:
+        """Get performance metrics for agent executions.
+
+        Args:
+            task_id: Optional task ID to filter by. If None, returns metrics for all tasks.
+
+        Returns:
+            List of dictionaries with performance metrics data
+        """
+        conn = self.db.connect()
+
+        if task_id is not None:
+            # Query metrics for specific task
+            results = conn.execute(
+                """
+                SELECT
+                    id,
+                    duration_seconds,
+                    token_count,
+                    model_provider,
+                    model_name
+                FROM agent_executions
+                WHERE task_id = ?
+                  AND status IN ('completed', 'timeout')
+                  AND duration_seconds IS NOT NULL
+                  AND duration_seconds > 0
+                ORDER BY model_provider, model_name
+                """,
+                [task_id],
+            ).fetchall()
+        else:
+            # Query metrics for all tasks
+            results = conn.execute(
+                """
+                SELECT
+                    id,
+                    duration_seconds,
+                    token_count,
+                    model_provider,
+                    model_name
+                FROM agent_executions
+                WHERE status IN ('completed', 'timeout')
+                  AND duration_seconds IS NOT NULL
+                  AND duration_seconds > 0
+                ORDER BY model_provider, model_name
+                """
+            ).fetchall()
+
+        metrics = []
+        for row in results:
+            metrics.append(
+                {
+                    "execution_id": row[0],
+                    "duration_seconds": row[1],
+                    "token_count": row[2],
+                    "model_provider": row[3],
+                    "model_name": row[4],
+                }
+            )
+
+        return metrics

@@ -393,3 +393,106 @@ def format_tool_call(node: ToolCallNode, max_result_length: int = 100) -> str:
         result_str = result_str[:max_result_length] + "..."
 
     return f"{node['tool_name']}({args_str}) → {result_str}"
+
+
+class ExecutionLogEntry(TypedDict):
+    """Represents a single entry in the chronological execution log.
+
+    Attributes:
+        index: Position in chronological sequence (0-based)
+        type: Message type (user, assistant, tool_call, tool_response, model-text-response)
+        content: Message content (str for text, dict for structured data)
+        timestamp: Optional timestamp (if available in message)
+        tool_name: Optional tool name (for tool messages only)
+    """
+
+    index: int
+    type: str
+    content: Any
+    timestamp: str | None
+    tool_name: str | None
+
+
+def extract_execution_log(execution: AgentExecution) -> list[ExecutionLogEntry]:
+    """Extract chronological execution log from agent execution messages.
+
+    Parses all_messages_json to create a flat, chronological list of all events
+    (user messages, tool calls, tool responses, assistant messages) for detailed
+    execution history viewing.
+
+    Args:
+        execution: Agent execution with all_messages_json
+
+    Returns:
+        List of execution log entries in chronological order
+
+    Raises:
+        ValueError: If messages cannot be parsed
+    """
+    if execution.all_messages_json is None:
+        return []
+
+    try:
+        messages = json.loads(execution.all_messages_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse messages JSON: {e}") from e
+
+    if not isinstance(messages, list):
+        # Handle error dict format
+        return []
+
+    log_entries: list[ExecutionLogEntry] = []
+
+    for index, msg in enumerate(messages):
+        if not isinstance(msg, dict):
+            continue
+
+        # Extract common fields
+        msg_type = str(msg.get("role", "unknown"))
+        timestamp = msg.get("timestamp")
+        tool_name = msg.get("tool_name")
+        content = msg.get("content", "")
+
+        # Create log entry
+        entry: ExecutionLogEntry = {
+            "index": index,
+            "type": msg_type,
+            "content": content,
+            "timestamp": timestamp if isinstance(timestamp, str) else None,
+            "tool_name": tool_name if isinstance(tool_name, str) else None,
+        }
+
+        log_entries.append(entry)
+
+    return log_entries
+
+
+def format_log_entry(entry: ExecutionLogEntry, max_content_length: int = 200) -> str:
+    """Format an execution log entry as a human-readable string.
+
+    Args:
+        entry: Execution log entry to format
+        max_content_length: Maximum length for content display (truncate if longer)
+
+    Returns:
+        Formatted string like "[user] Check if 17 is prime" or
+        "[tool_call:check_prime] {n: 17}"
+    """
+    # Format type with tool name if applicable
+    type_str = (
+        f"{entry['type']}:{entry['tool_name']}" if entry["tool_name"] else entry["type"]
+    )
+
+    # Format content
+    content = entry["content"]
+    content_str = str(content)
+
+    # Truncate if too long
+    if len(content_str) > max_content_length:
+        content_str = content_str[:max_content_length] + "..."
+
+    # Include timestamp if available
+    if entry["timestamp"]:
+        return f"[{entry['timestamp']}] [{type_str}] {content_str}"
+    else:
+        return f"[{type_str}] {content_str}"

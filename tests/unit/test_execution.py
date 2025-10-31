@@ -219,3 +219,95 @@ class TestMessageParsing:
 
         # Should raise appropriate error or return empty list
         assert True  # Placeholder
+
+
+class TestExecutionLogParsing:
+    """Tests for extracting chronological execution logs from all_messages.
+
+    Execution logs are different from tool hierarchy - they show a flat,
+    chronological list of all events (user messages, tool calls, tool responses,
+    assistant messages) with timestamps for detailed execution history viewing.
+    """
+
+    def test_extract_chronological_log_single_tool_call(self) -> None:
+        """Test extracting chronological log with a single tool call.
+
+        Expected workflow:
+        1. Parse all_messages_json
+        2. Extract messages in chronological order
+        3. Return list with: user message, tool call, tool response, assistant message
+        4. Each entry should have: type, content, timestamp (if available)
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_multiple_tool_calls(self) -> None:
+        """Test extracting chronological log with multiple sequential tool calls.
+
+        Expected behavior:
+        1. Parse messages
+        2. Preserve chronological order
+        3. Return flat list: user → tool1_call → tool1_response → tool2_call → ...
+        4. Each entry includes message type and content
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_with_nested_calls(self) -> None:
+        """Test extracting chronological log when tools are nested.
+
+        Expected workflow:
+        1. Parse nested tool calls
+        2. Maintain chronological order (parent call → child call → child response → ...)
+        3. Optionally include nesting level indicator
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_includes_timestamps(self) -> None:
+        """Test that chronological log includes timestamps if available.
+
+        Expected behavior:
+        1. Check each message for timestamp field
+        2. Include timestamp in log entry if present
+        3. Handle messages without timestamps gracefully
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_filters_by_type(self) -> None:
+        """Test filtering log by message type.
+
+        Expected workflow:
+        1. Parse all messages
+        2. Filter to only tool_call and tool_response types
+        3. Return filtered chronological list
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_empty_messages(self) -> None:
+        """Test extracting log from empty all_messages_json.
+
+        Expected behavior:
+        1. Parse empty or null all_messages_json
+        2. Return empty list
+        3. No errors raised
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder
+
+    def test_extract_chronological_log_formats_entries(self) -> None:
+        """Test that log entries are formatted consistently.
+
+        Expected structure for each entry:
+        {
+            "type": "user" | "tool_call" | "tool_response" | "assistant",
+            "content": str | dict,
+            "timestamp": str | None,
+            "tool_name": str | None (for tool messages),
+            "index": int (position in chronological sequence)
+        }
+        """
+        # This test will be implemented after T076
+        assert True  # Placeholder

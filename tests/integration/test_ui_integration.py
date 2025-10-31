@@ -241,3 +241,105 @@ class TestHistoricalLeaderboardDisplay:
         """
         # This test will be implemented after T070-T071
         pass
+
+
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires Phase 8 implementation (T076-T078)")
+class TestExecutionHistoryDisplay:
+    """Tests for detailed execution history and tool usage display.
+
+    These tests will be enabled after implementing:
+    - T076: Execution log parser
+    - T077: Execution log display component
+    - T078: Execution log modal/panel in leaderboard
+    """
+
+    def test_click_agent_shows_execution_log(self) -> None:
+        """Test clicking an agent in leaderboard shows execution log.
+
+        Expected workflow:
+        1. Execute task with tool calls
+        2. View leaderboard
+        3. Click on an agent's row
+        4. Verify execution log modal/panel opens
+        5. Verify log displays chronological events
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_shows_chronological_order(self) -> None:
+        """Test that execution log displays events in chronological order.
+
+        Expected behavior:
+        1. Create execution with multiple tool calls
+        2. Open execution log
+        3. Verify events ordered: user → tool_call → tool_response → assistant
+        4. Verify timestamps (if available) are in ascending order
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_displays_tool_calls_with_details(self) -> None:
+        """Test that execution log shows detailed tool call information.
+
+        Expected workflow:
+        1. Create execution with tool calls
+        2. Open execution log
+        3. Verify each tool call shows:
+           - Tool name
+           - Arguments/inputs
+           - Result/output
+           - Timestamp (if available)
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_displays_user_and_assistant_messages(self) -> None:
+        """Test that execution log includes user prompts and assistant responses.
+
+        Expected behavior:
+        1. Create execution
+        2. Open execution log
+        3. Verify shows user's initial prompt
+        4. Verify shows assistant's final response
+        5. Verify shows intermediate assistant messages (if any)
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_handles_failed_tool_calls(self) -> None:
+        """Test that execution log displays failed/error tool calls.
+
+        Expected workflow:
+        1. Create execution with failed tool call
+        2. Open execution log
+        3. Verify failed tool call is shown
+        4. Verify error message is displayed
+        5. Verify error is visually distinguished (e.g., red color)
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_modal_close_functionality(self) -> None:
+        """Test that execution log modal can be closed.
+
+        Expected behavior:
+        1. Open execution log modal
+        2. Click close button or outside modal
+        3. Verify modal closes
+        4. Verify can reopen modal for same or different agent
+        """
+        # This test will be implemented after T076-T078
+        pass
+
+    def test_execution_log_empty_for_no_tool_calls(self) -> None:
+        """Test execution log when agent made no tool calls.
+
+        Expected workflow:
+        1. Create execution with no tool calls (direct response)
+        2. Open execution log
+        3. Verify shows user message and assistant response
+        4. Verify shows message: "No tool calls made"
+        """
+        # This test will be implemented after T076-T078
+        pass

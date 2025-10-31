@@ -4,11 +4,12 @@ This module provides a UI component for displaying agent execution leaderboard.
 Shows evaluation scores, rankings, and performance metrics.
 """
 
-from typing import cast
+from typing import Any, cast
 
 from nicegui import ui
 
 from src.database.repositories import TaskRepository
+from src.ui.components.execution_log import create_execution_log
 
 
 def format_duration(seconds: float | None) -> str:
@@ -152,6 +153,13 @@ class LeaderboardTable:
                 "align": "left",
                 "sortable": False,
             },
+            {
+                "name": "actions",
+                "label": "Actions",
+                "field": "actions",
+                "align": "center",
+                "sortable": False,
+            },
         ]
 
         # Prepare table rows
@@ -160,6 +168,7 @@ class LeaderboardTable:
             model_identifier = f"{entry['model_provider']}/{entry['model_name']}"
             duration_val = entry.get("duration_seconds")
             duration_seconds = cast(float, duration_val) if duration_val is not None else None
+            execution_id = cast(int, entry["execution_id"])
             rows.append(
                 {
                     "rank": rank,
@@ -168,6 +177,8 @@ class LeaderboardTable:
                     "duration": format_duration(duration_seconds),
                     "tokens": entry.get("token_count") or "N/A",
                     "explanation": entry.get("evaluation_explanation", "N/A"),
+                    "execution_id": execution_id,
+                    "actions": "",  # Placeholder for actions column
                 }
             )
 
@@ -210,6 +221,61 @@ class LeaderboardTable:
             </q-td>
             """,
         )
+
+        # Add actions column with view log button
+        self.table.add_slot(
+            "body-cell-actions",
+            r"""
+            <q-td :props="props">
+                <q-btn
+                    flat dense round
+                    icon="visibility"
+                    color="primary"
+                    @click="$parent.$emit('view_log', props.row.execution_id)"
+                >
+                    <q-tooltip>View Execution Log</q-tooltip>
+                </q-btn>
+            </q-td>
+            """,
+        )
+
+        # Handle view log button clicks
+        def on_view_log(e: Any) -> None:
+            """Handle view log button click."""
+            execution_id = e.args
+            if execution_id is not None:
+                self._show_execution_log_modal(execution_id)
+
+        self.table.on("view_log", on_view_log)
+
+    def _show_execution_log_modal(self, execution_id: int) -> None:
+        """Show execution log modal for the given execution.
+
+        Args:
+            execution_id: ID of the execution to show log for
+        """
+        # Fetch execution from database
+        execution = self.repository.get_execution(execution_id)
+
+        if not execution:
+            ui.notify("Execution not found", type="negative")
+            return
+
+        # Create modal dialog
+        with ui.dialog() as dialog, ui.card().classes("w-full max-w-4xl"):
+            ui.label(f"Execution Log: {execution.model_provider}/{execution.model_name}").classes(
+                "text-h6"
+            )
+            ui.label(f"Status: {execution.status}").classes("text-caption text-grey-7")
+
+            # Create execution log component
+            create_execution_log(execution)
+
+            # Close button
+            with ui.row().classes("w-full justify-end mt-4"):
+                ui.button("Close", on_click=dialog.close).props("outline")
+
+        dialog.open()
 
     def update_task(self, task_id: int) -> None:
         """Update the leaderboard for a different task.

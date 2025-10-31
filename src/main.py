@@ -12,6 +12,7 @@ from nicegui import ui
 from src.config.loader import ConfigLoader
 from src.database.connection import DatabaseConnection
 from src.ui.pages.main import create_main_page
+from src.ui.pages.performance import create_performance_page
 
 
 def parse_args() -> argparse.Namespace:
@@ -93,8 +94,19 @@ def main() -> None:
     # Create UI
     @ui.page("/")
     def index() -> None:
-        """Main page route."""
-        create_main_page(config, db)
+        """Main page route with tab navigation."""
+        # Create tabs
+        with ui.tabs().classes("w-full") as tabs:
+            main_tab = ui.tab("Task Execution", icon="play_arrow")
+            perf_tab = ui.tab("Performance", icon="bar_chart")
+
+        # Create tab panels
+        with ui.tab_panels(tabs, value=main_tab).classes("w-full"):
+            with ui.tab_panel(main_tab):
+                create_main_page(config, db)
+
+            with ui.tab_panel(perf_tab):
+                create_performance_page(config, db)
 
     # Run application
     print("\n🚀 Starting Multi-Agent Competition System")

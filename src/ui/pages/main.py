@@ -10,7 +10,8 @@ from src.agents.task_agent import create_task_agents_from_config
 from src.config.models import AppConfig
 from src.database.connection import DatabaseConnection
 from src.database.repositories import TaskRepository
-from src.execution.executor import evaluate_execution, execute_multi_agent
+from src.execution.evaluator import evaluate_execution, extract_agent_response
+from src.execution.executor import execute_multi_agent
 from src.execution.state import MultiAgentExecutionState
 from src.models.execution import AgentExecution
 from src.models.task import TaskSubmission
@@ -132,7 +133,6 @@ class MainPage:
             for execution in executions:
                 try:
                     # Extract agent response from execution
-                    from src.execution.evaluator import extract_agent_response
                     agent_response = extract_agent_response(execution.all_messages_json)
 
                     if agent_response:

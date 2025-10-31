@@ -131,14 +131,29 @@ class MainPage:
 
             for execution in executions:
                 try:
-                    evaluation = await evaluate_execution(
-                        evaluation_agent,
-                        self.config.evaluation_agent,
-                        prompt,
-                        execution,
-                    )
-                    # Save evaluation to database
-                    self.repository.create_evaluation(evaluation)
+                    # Extract agent response from execution
+                    from src.execution.evaluator import extract_agent_response
+                    agent_response = extract_agent_response(execution.all_messages_json)
+
+                    if agent_response:
+                        evaluation = await evaluate_execution(
+                            execution,
+                            prompt,
+                            agent_response,
+                            evaluation_agent,
+                            timeout_seconds=30.0,
+                        )
+                        # Save evaluation to database
+                        self.repository.create_evaluation(evaluation)
+                    else:
+                        model_id = f"{execution.model_provider}/{execution.model_name}"
+                        try:
+                            ui.notify(
+                                f"No agent response found for {model_id}",
+                                type="warning",
+                            )
+                        except Exception:
+                            pass
                 except Exception as e:
                     model_id = f"{execution.model_provider}/{execution.model_name}"
                     try:

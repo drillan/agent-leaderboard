@@ -102,12 +102,13 @@ class ExecutionStatusDisplay:
         """
         self.execution_state = execution_state
 
-        # Update existing status labels
-        for identifier, agent_state in execution_state.agent_states.items():
-            if identifier in self.status_labels:
-                color = get_status_color(agent_state.status)
-                self.status_labels[identifier].set_text(agent_state.status.value)
-                self.status_labels[identifier].props(f"color={color}")
+        # Refresh the entire display to ensure all agents are shown
+        if self.container:
+            self.container.clear()
+            with self.container:
+                ui.label("Execution Status").classes("text-h6")
+                self.status_labels.clear()
+                self._render_status()
 
     def clear(self) -> None:
         """Clear the status display."""

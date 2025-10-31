@@ -6,6 +6,7 @@ with timeout handling and result collection.
 
 import asyncio
 import json
+import logging
 from typing import Any
 
 from pydantic_ai import Agent
@@ -13,6 +14,8 @@ from pydantic_ai import Agent
 from src.config.models import ModelConfig
 from src.execution.timeout import with_timeout
 from src.models.execution import AgentExecution, ExecutionStatus
+
+logger = logging.getLogger(__name__)
 
 
 async def execute_single_agent(
@@ -55,18 +58,8 @@ async def execute_single_agent(
             execution.mark_completed()
 
             # Extract all messages for tool call tracking
-            # Pydantic AI stores messages in result.new_messages()
-            new_messages = result.new_messages()
-            messages_data = []
-            for msg in new_messages:
-                # Convert message to dict for JSON serialization
-                if hasattr(msg, "model_dump"):
-                    messages_data.append(msg.model_dump())
-                else:
-                    # Fallback for messages without model_dump
-                    messages_data.append({"role": str(msg.role), "content": str(msg.content)})
-
-            execution.all_messages_json = json.dumps(messages_data)
+            # Use Pydantic AI's built-in JSON serialization
+            execution.all_messages_json = result.all_messages_json().decode("utf-8")
 
             # Extract token count if available
             usage = result.usage()
@@ -76,7 +69,13 @@ async def execute_single_agent(
     except Exception as e:
         # Execution failed
         execution.mark_failed()
-        execution.all_messages_json = json.dumps({"error": str(e)})
+        error_message = str(e)
+        execution.all_messages_json = json.dumps({"error": error_message})
+        model_id = f"{model_config.provider}/{model_config.model}"
+        logger.error(
+            f"Agent execution failed for {model_id}: {error_message}",
+            exc_info=True,
+        )
 
     return execution
 
@@ -118,3 +117,68 @@ async def execute_multi_agent(
     results = await asyncio.gather(*tasks)
 
     return list(results)
+
+
+def extract_tool_calls(messages_json: str) -> list[dict[str, Any]]:
+    """Extract tool calls from execution messages JSON.
+
+    Parses all_messages_json to extract tool call information
+    for building execution hierarchy.
+
+    Args:
+        messages_json: JSON string of messages from agent execution
+
+    Returns:
+        List of extracted tool calls with metadata
+
+    Example:
+        >>> messages_str = '[{"kind":"request","parts":[{"type":"tool_call",'
+        >>> messages_str += '"tool_name":"check_prime","args":{"n":17}}]}]'
+        >>> calls = extract_tool_calls(messages_str)
+        >>> len(calls) > 0
+        True
+    """
+    tool_calls: list[dict[str, Any]] = []
+
+    try:
+        messages = json.loads(messages_json)
+    except (json.JSONDecodeError, TypeError):
+        logger.debug("Could not parse messages JSON for tool call extraction")
+        return tool_calls
+
+    if not isinstance(messages, list):
+        logger.debug(f"Messages is not a list: {type(messages)}")
+        return tool_calls
+
+    logger.debug(f"Extracting tool calls from {len(messages)} messages")
+
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+
+        parts = message.get("parts", [])
+        if not isinstance(parts, list):
+            continue
+
+        for part in parts:
+            if not isinstance(part, dict):
+                continue
+
+            # Pydantic AI uses "part_kind" instead of "type"
+            # Check both for compatibility
+            part_kind = part.get("part_kind", "")
+            part_type = part.get("type", "")
+
+            if part_kind == "tool-call" or part_type == "tool_call":
+                tool_name = part.get("tool_name", "unknown")
+                args = part.get("args", {})
+                logger.debug(f"Found tool call: {tool_name} with args: {args}")
+                tool_call = {
+                    "tool_name": tool_name,
+                    "args": args,
+                    "timestamp": part.get("timestamp") or message.get("timestamp"),
+                }
+                tool_calls.append(tool_call)
+
+    logger.debug(f"Extracted {len(tool_calls)} tool calls total")
+    return tool_calls

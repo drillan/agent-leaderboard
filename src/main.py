@@ -4,6 +4,7 @@ This module initializes and runs the Multi-Agent Competition System.
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -12,6 +13,12 @@ from nicegui import ui
 from src.config.loader import ConfigLoader
 from src.database.connection import DatabaseConnection
 from src.ui.pages.main import create_main_page
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 def parse_args() -> argparse.Namespace:

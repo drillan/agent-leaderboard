@@ -292,7 +292,8 @@ class TaskRepository:
                 token_count,
                 score,
                 evaluation_text,
-                prompt
+                prompt,
+                all_messages
             FROM leaderboard_entries
             WHERE task_id = ?
             ORDER BY score DESC, duration_seconds ASC
@@ -313,6 +314,7 @@ class TaskRepository:
                     "score": row[6],
                     "evaluation_text": row[7],
                     "prompt": row[8],
+                    "all_messages": row[9],
                 }
             )
 

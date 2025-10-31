@@ -9,7 +9,7 @@ import os
 from pydantic_ai import Agent
 
 from src.agents.tools import check_palindrome, check_prime, get_datetime
-from src.config.models import ModelConfig
+from src.config.models import ModelConfig, get_pydantic_ai_provider
 
 
 def create_task_agent(config: ModelConfig) -> Agent:
@@ -30,8 +30,11 @@ def create_task_agent(config: ModelConfig) -> Agent:
     if not api_key:
         raise ValueError(f"API key environment variable {config.api_key_env} not set")
 
+    # Convert user-friendly provider name to Pydantic AI format
+    pydantic_ai_provider = get_pydantic_ai_provider(config.provider)
+
     # Construct model string based on provider
-    model_string = f"{config.provider}:{config.model}"
+    model_string = f"{pydantic_ai_provider}{config.model}"
 
     # Create agent with tools
     agent = Agent(

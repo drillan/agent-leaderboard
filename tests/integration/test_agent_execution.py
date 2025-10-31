@@ -511,6 +511,192 @@ class TestLeaderboardView:
 
 
 @pytest.mark.integration
+class TestEvaluationWorkflow:
+    """Tests for complete evaluation workflow integration."""
+
+    def test_evaluation_workflow_end_to_end(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test complete workflow: execute → evaluate → store → display.
+
+        This test verifies the integration of:
+        1. Agent execution creation and storage
+        2. Evaluation agent response parsing
+        3. Evaluation storage in database
+        4. Leaderboard query with evaluation results
+        """
+        from src.agents.eval_agent import parse_evaluation_response
+        from src.database.repositories import TaskRepository
+        from src.models.execution import AgentExecution, ExecutionStatus
+
+        repo = TaskRepository(temp_db)
+
+        # 1. Create task
+        from src.models.task import TaskSubmission
+
+        task = TaskSubmission(prompt="What is 2 + 2?")
+        task_id = repo.create_task(task)
+        assert task_id > 0
+
+        # 2. Create agent execution
+        execution = AgentExecution(
+            task_id=task_id,
+            model_provider="openai",
+            model_name="gpt-4o",
+            status=ExecutionStatus.COMPLETED,
+        )
+        execution.mark_completed()
+        execution.all_messages_json = '{"response": "2 + 2 = 4"}'
+        execution_id = repo.create_execution(execution)
+        assert execution_id > 0
+
+        # 3. Simulate evaluation agent response
+        eval_response = """The agent provided the correct answer: 2 + 2 = 4.
+
+Score: 95
+Explanation: Correct mathematical calculation with clear reasoning."""
+
+        # 4. Parse evaluation response
+        score, explanation = parse_evaluation_response(eval_response)
+        assert score == 95
+        assert "correct" in explanation.lower()
+
+        # 5. Create and store evaluation
+        evaluation = EvaluationResult(
+            execution_id=execution_id, score=score, explanation=explanation
+        )
+        eval_id = repo.create_evaluation(evaluation)
+        assert eval_id > 0
+
+        # 6. Verify evaluation in database
+        conn = temp_db.connect()
+        result = conn.execute(
+            "SELECT score, explanation FROM evaluations WHERE id = ?", [eval_id]
+        ).fetchone()
+        assert result is not None
+        assert result[0] == 95
+        assert result[1] == explanation
+
+        # 7. Verify leaderboard shows evaluation
+        leaderboard = repo.get_leaderboard(task_id)
+        assert len(leaderboard) > 0
+        assert leaderboard[0]["score"] == 95
+        assert leaderboard[0]["evaluation_text"] == explanation
+
+    def test_evaluation_workflow_multiple_agents(
+        self, temp_db: DatabaseConnection
+    ) -> None:
+        """Test evaluation workflow with multiple agent executions.
+
+        Verifies that:
+        1. Multiple executions can be evaluated independently
+        2. Leaderboard correctly ranks by score DESC, duration ASC
+        3. All evaluations are correctly stored and retrieved
+        """
+        from src.agents.eval_agent import parse_evaluation_response
+        from src.database.repositories import TaskRepository
+        from src.models.execution import AgentExecution, ExecutionStatus
+        from src.models.task import TaskSubmission
+
+        repo = TaskRepository(temp_db)
+
+        # 1. Create task
+        task = TaskSubmission(prompt="Solve 5 + 3")
+        task_id = repo.create_task(task)
+
+        # 2. Create executions with different models and response times
+        models = [
+            ("openai", "gpt-4o", 25.5, 92),
+            ("anthropic", "claude-sonnet-4", 20.0, 88),
+            ("google", "gemini-2.0-pro", 30.0, 95),
+        ]
+
+        execution_ids = []
+        for provider, model, duration, expected_score in models:
+            execution = AgentExecution(
+                task_id=task_id,
+                model_provider=provider,
+                model_name=model,
+                status=ExecutionStatus.COMPLETED,
+            )
+            execution.mark_completed()
+            execution.duration_seconds = duration
+            execution.all_messages_json = f'{{"response": "5 + 3 = 8"}}'
+            exec_id = repo.create_execution(execution)
+            execution_ids.append((exec_id, expected_score, duration))
+
+        # 3. Create evaluations for each execution
+        for exec_id, score, _ in execution_ids:
+            eval_response = f"""Score: {score}
+Explanation: Good response with score {score}."""
+            parsed_score, explanation = parse_evaluation_response(eval_response)
+
+            evaluation = EvaluationResult(
+                execution_id=exec_id, score=parsed_score, explanation=explanation
+            )
+            repo.create_evaluation(evaluation)
+
+        # 4. Verify leaderboard ordering (by score DESC, then duration ASC)
+        leaderboard = repo.get_leaderboard(task_id)
+        assert len(leaderboard) == 3
+
+        # Should be ordered by score DESC
+        scores = [entry["score"] for entry in leaderboard]
+        assert scores == sorted(scores, reverse=True)
+
+        # Highest score first (95, 92, 88)
+        assert leaderboard[0]["score"] == 95
+        assert leaderboard[1]["score"] == 92
+        assert leaderboard[2]["score"] == 88
+
+    def test_evaluation_parsing_integration(self, temp_db: DatabaseConnection) -> None:
+        """Test evaluation response parsing with various formats.
+
+        Verifies that parse_evaluation_response handles:
+        1. Standard format with score and explanation
+        2. Extra whitespace variations
+        3. Different explanation formats
+        """
+        from src.agents.eval_agent import parse_evaluation_response
+
+        # Test case 1: Standard format
+        response1 = """Score: 85
+Explanation: Good performance overall."""
+        score1, explanation1 = parse_evaluation_response(response1)
+        assert score1 == 85
+        assert explanation1 == "Good performance overall."
+
+        # Test case 2: Extra whitespace
+        response2 = """Score:   78
+Explanation:    Decent response with some issues."""
+        score2, explanation2 = parse_evaluation_response(response2)
+        assert score2 == 78
+        assert explanation2 == "Decent response with some issues."
+
+        # Test case 3: Long explanation
+        response3 = """The response demonstrates good understanding.
+
+Score: 92
+Explanation: Excellent comprehension of the problem with clear
+step-by-step explanation and correct answer."""
+        score3, explanation3 = parse_evaluation_response(response3)
+        assert score3 == 92
+        assert "clear" in explanation3
+
+        # Test case 4: Invalid score raises error
+        response_invalid = """Score: invalid
+Explanation: This should fail."""
+        with pytest.raises(ValueError, match="Could not extract score"):
+            parse_evaluation_response(response_invalid)
+
+        # Test case 5: Score out of range raises error
+        response_out_of_range = """Score: 150
+Explanation: Score too high."""
+        with pytest.raises(ValueError, match="must be between 0 and 100"):
+            parse_evaluation_response(response_out_of_range)
+
+
+@pytest.mark.integration
 class TestCascadeDelete:
     """Tests for cascade delete behavior.
 

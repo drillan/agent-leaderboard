@@ -133,3 +133,36 @@ class AppConfig(BaseModel):
         if len(models) != len(set(models)):
             raise ValueError("Duplicate models detected in task_agents")
         return v
+
+
+def get_pydantic_ai_provider(provider: str) -> str:
+    """Convert user-friendly provider name to Pydantic AI format.
+
+    Maps simplified provider names used in configuration to the complete
+    provider strings required by Pydantic AI for model inference.
+
+    Args:
+        provider: User-friendly provider name (openai, anthropic, or gemini)
+
+    Returns:
+        Pydantic AI provider string (e.g., 'openai', 'anthropic', 'google-gla:')
+
+    Raises:
+        ValueError: If provider is not recognized
+
+    Example:
+        >>> get_pydantic_ai_provider("gemini")
+        'google-gla:'
+        >>> get_pydantic_ai_provider("openai")
+        'openai'
+    """
+    mapping: dict[str, str] = {
+        "openai": "openai",
+        "anthropic": "anthropic",
+        "gemini": "google-gla:",  # Google AI Studio (Generative Language API)
+    }
+    if provider not in mapping:
+        raise ValueError(
+            f"Unknown provider: {provider}. Must be one of: {', '.join(mapping.keys())}"
+        )
+    return mapping[provider]

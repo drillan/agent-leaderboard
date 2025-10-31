@@ -1,7 +1,7 @@
 [project]
 name = "agent-leaderboard"
 version = "0.1.0"
-description = "Add your description here"
+description = "Multi-Agent Competition System - Execute tasks across multiple AI models and compare their performance"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -11,6 +11,16 @@ dependencies = [
     "pydantic-ai-slim[openai,anthropic,google]>=1.9.0",
     "tomli-w>=1.2.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[project.scripts]
+agent-leaderboard = "src.main:main"
 
 [dependency-groups]
 dev = [

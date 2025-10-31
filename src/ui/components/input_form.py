@@ -3,22 +3,29 @@
 This module provides a UI component for task prompt input.
 """
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from nicegui import ui
 
 
-def create_task_input_form(on_submit: Callable[[str], None]) -> None:
+def create_task_input_form(
+    on_submit: Callable[[str], None | Awaitable[None]]
+) -> None:
     """Create a task input form with textarea and submit button.
 
     Args:
         on_submit: Callback function to execute when form is submitted.
+                   Can be either a synchronous or asynchronous function.
                    Receives the prompt text as argument.
 
     Example:
         >>> def handle_submit(prompt: str):
         ...     print(f"Submitted: {prompt}")
         >>> create_task_input_form(handle_submit)
+
+        >>> async def async_handle_submit(prompt: str):
+        ...     await process_prompt(prompt)
+        >>> create_task_input_form(async_handle_submit)
     """
     with ui.card().classes("w-full"):
         ui.label("Task Prompt").classes("text-h6")
@@ -30,11 +37,14 @@ def create_task_input_form(on_submit: Callable[[str], None]) -> None:
         ).classes("w-full").props("rows=5")
 
         # Submit button
-        def handle_click() -> None:
+        async def handle_click() -> None:
             """Handle submit button click."""
             prompt = prompt_input.value.strip() if prompt_input.value else ""
             if prompt:
-                on_submit(prompt)
+                result = on_submit(prompt)
+                # Handle both sync and async callbacks
+                if isinstance(result, Awaitable):
+                    await result
                 prompt_input.value = ""  # Clear input after submission
             else:
                 ui.notify("Please enter a task prompt", type="warning")

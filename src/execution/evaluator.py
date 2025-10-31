@@ -70,20 +70,33 @@ Explanation: [your explanation]
         # Extract response text from Pydantic AI result
         # The result object has various attributes, try to extract the text response
         response_text = ""
+        logger.debug(f"Result type: {type(result)}, Result: {result}")
+        logger.debug(f"Result attributes: {dir(result)}")
 
-        # Method 1: Try to convert result to string
+        # Method 1: Try to access data attribute directly
         try:
-            response_text = str(result)
-            logger.debug(f"Extracted text using str(): {response_text[:100]}")
-        except Exception:
-            pass
+            if hasattr(result, "data"):
+                response_text = str(result.data)
+                logger.debug(f"Extracted text using result.data: {response_text[:100]}")
+        except Exception as e:
+            logger.debug(f"Could not extract from result.data: {e}")
 
-        # Method 2: If that doesn't work, try to parse from all_messages_json
+        # Method 2: Try to convert result to string
+        if not response_text:
+            try:
+                response_text = str(result).strip()
+                if response_text and response_text != "":
+                    logger.debug(f"Extracted text using str(): {response_text[:100]}")
+            except Exception as e:
+                logger.debug(f"Could not convert result to string: {e}")
+
+        # Method 3: Try to parse from all_messages_json
         if not response_text:
             try:
                 messages_json = result.all_messages_json().decode("utf-8")
                 # Extract text from the final response message
                 messages = json.loads(messages_json)
+                logger.debug(f"Parsed {len(messages)} messages from all_messages_json")
                 # Look for the last response message with text content
                 for message in reversed(messages):
                     if isinstance(message, dict) and message.get("kind") == "response":
@@ -104,8 +117,9 @@ Explanation: [your explanation]
                 logger.debug(f"Could not extract from messages: {e}")
 
         if not response_text:
+            logger.error(f"Failed to extract response text. Result object: {result}")
             raise ValueError(
-                "Could not extract response text from evaluation agent result"
+                "No response text found in evaluation agent result"
             )
 
         # Parse score and explanation

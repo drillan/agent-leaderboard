@@ -24,16 +24,16 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project directory structure per plan.md (src/, tests/, config.toml, pyproject.toml)
-- [ ] T002 Initialize Python project with uv and add pydantic-ai-slim[openai,anthropic,google] dependency
-- [ ] T003 [P] Add NiceGUI dependency to pyproject.toml
-- [ ] T004 [P] Add duckdb dependency to pyproject.toml
-- [ ] T005 [P] Configure ruff for linting and formatting in pyproject.toml
-- [ ] T006 [P] Configure mypy for type checking in pyproject.toml
-- [ ] T007 [P] Configure pytest for testing in pyproject.toml
-- [ ] T008 Create default config.toml with sample configuration (2 task agents, 1 eval agent)
-- [ ] T009 Create .env.example file documenting required environment variables (API keys)
-- [ ] T010 Add .gitignore for Python, venv, DuckDB files, .env
+- [X] T001 Create project directory structure per plan.md (src/, tests/, config.toml, pyproject.toml)
+- [X] T002 Initialize Python project with uv and add pydantic-ai-slim[openai,anthropic,google] dependency
+- [X] T003 [P] Add NiceGUI dependency to pyproject.toml
+- [X] T004 [P] Add duckdb dependency to pyproject.toml
+- [X] T005 [P] Configure ruff for linting and formatting in pyproject.toml
+- [X] T006 [P] Configure mypy for type checking in pyproject.toml
+- [X] T007 [P] Configure pytest for testing in pyproject.toml
+- [X] T008 Create default config.toml with sample configuration (2 task agents, 1 eval agent)
+- [X] T009 Create .env.example file documenting required environment variables (API keys)
+- [X] T010 Add .gitignore for Python, venv, DuckDB files, .env
 
 ---
 

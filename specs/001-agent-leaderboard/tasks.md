@@ -57,16 +57,16 @@
 
 ### Domain Models
 
-- [ ] T017 [P] Create TaskSubmission model in src/models/task.py with Pydantic validation
-- [ ] T018 [P] Create AgentExecution model in src/models/execution.py with status enum
-- [ ] T019 [P] Create EvaluationResult model in src/models/evaluation.py with score validation (0-100)
-- [ ] T020 [P] Create PerformanceMetrics model in src/models/metrics.py
+- [X] T017 [P] Create TaskSubmission model in src/models/task.py with Pydantic validation
+- [X] T018 [P] Create AgentExecution model in src/models/execution.py with status enum
+- [X] T019 [P] Create EvaluationResult model in src/models/evaluation.py with score validation (0-100)
+- [X] T020 [P] Create PerformanceMetrics model in src/models/metrics.py
 
 ### Tools Implementation
 
-- [ ] T021 [P] Implement get_datetime tool in src/agents/tools.py with @tool decorator
-- [ ] T022 [P] Implement check_prime tool in src/agents/tools.py with validation (n >= 2)
-- [ ] T023 [P] Implement check_palindrome tool in src/agents/tools.py (case-insensitive)
+- [X] T021 [P] Implement get_datetime tool in src/agents/tools.py with @tool decorator
+- [X] T022 [P] Implement check_prime tool in src/agents/tools.py with validation (n >= 2)
+- [X] T023 [P] Implement check_palindrome tool in src/agents/tools.py (case-insensitive)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

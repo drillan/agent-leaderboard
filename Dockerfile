@@ -43,6 +43,7 @@ USER appuser
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     # Hugging Face Spaces defaults
     PORT=7860 \

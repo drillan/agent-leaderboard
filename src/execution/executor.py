@@ -75,18 +75,12 @@ async def execute_single_agent(
             execution.mark_completed()
 
             # Extract all messages for tool call tracking
-            # Pydantic AI stores messages in result.new_messages()
-            new_messages = result.new_messages()
-            messages_data = []
-            for msg in new_messages:
-                # Convert message to dict for JSON serialization
-                if hasattr(msg, "model_dump"):
-                    messages_data.append(msg.model_dump())
-                else:
-                    # Fallback for messages without model_dump
-                    messages_data.append({"role": str(msg.role), "content": str(msg.content)})
-
-            execution.all_messages_json = json.dumps(messages_data)
+            # Use Pydantic AI's built-in JSON serialization
+            try:
+                execution.all_messages_json = result.all_messages_json().decode("utf-8")
+            except (AttributeError, TypeError):
+                # Fallback if all_messages_json is not available
+                execution.all_messages_json = json.dumps([])
 
             # Extract token count if available
             usage = result.usage()

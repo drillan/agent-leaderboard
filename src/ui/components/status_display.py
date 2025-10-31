@@ -89,9 +89,7 @@ class ExecutionStatusDisplay:
                 ui.label(identifier).classes("font-bold")
 
                 # Status text
-                status_label = ui.label(agent_state.status.value).props(
-                    f"color={color}"
-                )
+                status_label = ui.label(agent_state.status.value).props(f"color={color}")
                 self.status_labels[identifier] = status_label
 
     def update_state(self, execution_state: MultiAgentExecutionState) -> None:

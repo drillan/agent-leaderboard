@@ -12,7 +12,7 @@ import pytest
 from src.database.connection import DatabaseConnection
 from src.database.schema import SCHEMA_VERSION
 from src.models.evaluation import EvaluationResult
-from src.models.execution import AgentExecution, ExecutionStatus
+from src.models.execution import AgentExecution
 from src.models.task import TaskSubmission
 
 
@@ -57,8 +57,7 @@ class TestDatabaseInitialization:
         """Test that task_submissions table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'task_submissions'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'task_submissions'"
         ).fetchone()
         assert result[0] == 1
 
@@ -66,8 +65,7 @@ class TestDatabaseInitialization:
         """Test that agent_executions table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'agent_executions'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'agent_executions'"
         ).fetchone()
         assert result[0] == 1
 
@@ -75,8 +73,7 @@ class TestDatabaseInitialization:
         """Test that evaluations table exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.tables "
-            "WHERE table_name = 'evaluations'"
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'evaluations'"
         ).fetchone()
         assert result[0] == 1
 
@@ -84,8 +81,7 @@ class TestDatabaseInitialization:
         """Test that leaderboard_entries view exists."""
         conn = temp_db.connect()
         result = conn.execute(
-            "SELECT COUNT(*) FROM information_schema.views "
-            "WHERE table_name = 'leaderboard_entries'"
+            "SELECT COUNT(*) FROM information_schema.views WHERE table_name = 'leaderboard_entries'"
         ).fetchone()
         assert result[0] == 1
 
@@ -160,9 +156,7 @@ class TestAgentExecutionPersistence:
         task_id = cursor.fetchone()[0]
 
         # Create execution
-        execution = AgentExecution(
-            task_id=task_id, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=task_id, model_provider="openai", model_name="gpt-4o")
 
         # Insert execution
         cursor = conn.execute(
@@ -205,9 +199,7 @@ class TestAgentExecutionPersistence:
         )
         task_id = cursor.fetchone()[0]
 
-        execution = AgentExecution(
-            task_id=task_id, model_provider="openai", model_name="gpt-4o"
-        )
+        execution = AgentExecution(task_id=task_id, model_provider="openai", model_name="gpt-4o")
 
         cursor = conn.execute(
             "INSERT INTO agent_executions (task_id, model_provider, model_name, status, started_at) "
@@ -355,16 +347,14 @@ class TestEvaluationPersistence:
         # Test score below 0
         with pytest.raises(Exception):  # DuckDB constraint violation
             conn.execute(
-                "INSERT INTO evaluations (execution_id, score, explanation) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
                 [execution_id, -1, "Test"],
             )
 
         # Test score above 100
         with pytest.raises(Exception):  # DuckDB constraint violation
             conn.execute(
-                "INSERT INTO evaluations (execution_id, score, explanation) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO evaluations (execution_id, score, explanation) VALUES (?, ?, ?)",
                 [execution_id, 101, "Test"],
             )
 
@@ -454,9 +444,7 @@ class TestLeaderboardView:
         assert results[1][0] == "openai"
         assert results[1][2] == 85
 
-    def test_leaderboard_view_includes_all_fields(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_leaderboard_view_includes_all_fields(self, temp_db: DatabaseConnection) -> None:
         """Test that leaderboard view includes all required fields."""
         conn = temp_db.connect()
 
@@ -705,9 +693,7 @@ class TestCascadeDelete:
     """
 
     @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
-    def test_delete_task_cascades_to_executions(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_delete_task_cascades_to_executions(self, temp_db: DatabaseConnection) -> None:
         """Test that deleting a task deletes associated executions."""
         conn = temp_db.connect()
 
@@ -735,9 +721,7 @@ class TestCascadeDelete:
         assert result[0] == 0
 
     @pytest.mark.skip(reason="DuckDB does not support ON DELETE CASCADE")
-    def test_delete_execution_cascades_to_evaluation(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_delete_execution_cascades_to_evaluation(self, temp_db: DatabaseConnection) -> None:
         """Test that deleting an execution deletes associated evaluation."""
         conn = temp_db.connect()
 
@@ -766,7 +750,156 @@ class TestCascadeDelete:
         conn.execute("DELETE FROM agent_executions WHERE id = ?", [execution_id])
 
         # Verify evaluation is also deleted
-        result = conn.execute(
-            "SELECT COUNT(*) FROM evaluations WHERE id = ?", [eval_id]
-        ).fetchone()
+        result = conn.execute("SELECT COUNT(*) FROM evaluations WHERE id = ?", [eval_id]).fetchone()
         assert result[0] == 0
+
+
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires Phase 4 implementation (T044-T045)")
+class TestEvaluationWorkflow:
+    """Tests for complete evaluation workflow.
+
+    These tests will be enabled after implementing:
+    - T044: Evaluation agent factory
+    - T045: Evaluation executor
+    """
+
+    def test_execute_and_evaluate_single_agent(self, temp_db: DatabaseConnection) -> None:
+        """Test executing an agent and then evaluating its response.
+
+        Expected workflow:
+        1. Create task submission
+        2. Execute agent (store in agent_executions)
+        3. Run evaluation agent on the result
+        4. Store evaluation (score + explanation)
+        5. Verify all data is persisted correctly
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_evaluate_multiple_agent_responses(self, temp_db: DatabaseConnection) -> None:
+        """Test evaluating multiple agents' responses to same task.
+
+        Expected workflow:
+        1. Create task submission
+        2. Execute 3 different agents
+        3. Evaluate all 3 responses
+        4. Verify all evaluations stored
+        5. Query leaderboard, verify sorting by score
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_evaluation_score_extraction(self, temp_db: DatabaseConnection) -> None:
+        """Test that evaluation properly extracts score from LLM response.
+
+        Expected behavior:
+        - Parse "Score: 85" from evaluation response
+        - Extract explanation text
+        - Validate score is within 0-100 range
+        - Store both in database
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_evaluation_with_failed_execution(self, temp_db: DatabaseConnection) -> None:
+        """Test evaluating a failed agent execution.
+
+        Expected behavior:
+        - Failed execution should receive low evaluation score
+        - Evaluation should explain why it failed
+        - Score should be stored normally
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_evaluation_with_timeout_execution(self, temp_db: DatabaseConnection) -> None:
+        """Test evaluating a timed-out agent execution.
+
+        Expected behavior:
+        - Timed-out execution should receive low/zero score
+        - Evaluation should note timeout as reason
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_leaderboard_query_after_evaluation(self, temp_db: DatabaseConnection) -> None:
+        """Test querying leaderboard after evaluations complete.
+
+        Expected workflow:
+        1. Create task with ID=1
+        2. Execute 3 agents with scores: 85, 92, 75
+        3. Query leaderboard for task_id=1
+        4. Verify results sorted by score DESC (92, 85, 75)
+        5. Verify all fields present (model, score, explanation, etc.)
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_leaderboard_query_with_tie_scores(self, temp_db: DatabaseConnection) -> None:
+        """Test leaderboard sorting when multiple agents have same score.
+
+        Expected workflow:
+        1. Execute 3 agents with scores: 85, 85, 90
+        2. Agents with score 85 have durations: 30s, 20s
+        3. Query leaderboard
+        4. Verify sorting: 90, 85 (20s), 85 (30s)
+        5. Secondary sort by duration ASC
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+    def test_leaderboard_empty_for_unevaluated_task(self, temp_db: DatabaseConnection) -> None:
+        """Test that leaderboard is empty for task without evaluations.
+
+        Expected behavior:
+        - Task exists with executions
+        - No evaluations yet
+        - Leaderboard query returns empty list
+        """
+        # This test will be implemented after T044-T045
+        pass
+
+
+@pytest.mark.integration
+@pytest.mark.skip(reason="Requires Phase 4 implementation (T046)")
+class TestToolHierarchyIntegration:
+    """Integration tests for tool call hierarchy extraction.
+
+    These tests will be enabled after implementing T046.
+    """
+
+    def test_extract_tool_calls_from_real_execution(self, temp_db: DatabaseConnection) -> None:
+        """Test extracting tool calls from actual agent execution.
+
+        Expected workflow:
+        1. Execute agent with task that uses multiple tools
+        2. Store all_messages_json in database
+        3. Retrieve and parse all_messages_json
+        4. Verify tool call tree structure
+        """
+        # This test will be implemented after T046
+        pass
+
+    def test_tool_hierarchy_with_sequential_calls(self, temp_db: DatabaseConnection) -> None:
+        """Test hierarchy extraction when agent makes sequential tool calls.
+
+        Expected:
+        - Agent calls check_prime(17)
+        - Then calls get_datetime()
+        - Hierarchy has 2 root-level nodes
+        - No parent-child relationships
+        """
+        # This test will be implemented after T046
+        pass
+
+    def test_tool_hierarchy_display_format(self, temp_db: DatabaseConnection) -> None:
+        """Test formatting tool hierarchy for display.
+
+        Expected:
+        - Each node shows: tool_name(args) → result
+        - Nested calls are indented
+        - Format is human-readable
+        """
+        # This test will be implemented after T046
+        pass

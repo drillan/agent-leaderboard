@@ -6,16 +6,33 @@ with timeout handling and result collection.
 
 import asyncio
 import json
-import logging
-from typing import Any
+from typing import Any, TypedDict
 
 from pydantic_ai import Agent
 
-from src.config.models import ModelConfig
+from src.agents.eval_agent import format_evaluation_prompt, parse_evaluation_response
+from src.config.models import EvaluationConfig, ModelConfig
 from src.execution.timeout import with_timeout
+from src.models.evaluation import EvaluationResult
 from src.models.execution import AgentExecution, ExecutionStatus
 
-logger = logging.getLogger(__name__)
+
+class ToolCallNode(TypedDict):
+    """Represents a tool call in the hierarchy tree.
+
+    Attributes:
+        tool_name: Name of the tool that was called
+        args: Arguments passed to the tool
+        result: Result returned by the tool (may contain error)
+        call_id: Unique identifier for this tool call
+        children: List of child tool calls (for nested calls)
+    """
+
+    tool_name: str
+    args: dict[str, Any]
+    result: Any
+    call_id: str
+    children: list["ToolCallNode"]
 
 
 async def execute_single_agent(
@@ -58,8 +75,18 @@ async def execute_single_agent(
             execution.mark_completed()
 
             # Extract all messages for tool call tracking
-            # Use Pydantic AI's built-in JSON serialization
-            execution.all_messages_json = result.all_messages_json().decode("utf-8")
+            # Pydantic AI stores messages in result.new_messages()
+            new_messages = result.new_messages()
+            messages_data = []
+            for msg in new_messages:
+                # Convert message to dict for JSON serialization
+                if hasattr(msg, "model_dump"):
+                    messages_data.append(msg.model_dump())
+                else:
+                    # Fallback for messages without model_dump
+                    messages_data.append({"role": str(msg.role), "content": str(msg.content)})
+
+            execution.all_messages_json = json.dumps(messages_data)
 
             # Extract token count if available
             usage = result.usage()
@@ -69,13 +96,7 @@ async def execute_single_agent(
     except Exception as e:
         # Execution failed
         execution.mark_failed()
-        error_message = str(e)
-        execution.all_messages_json = json.dumps({"error": error_message})
-        model_id = f"{model_config.provider}/{model_config.model}"
-        logger.error(
-            f"Agent execution failed for {model_id}: {error_message}",
-            exc_info=True,
-        )
+        execution.all_messages_json = json.dumps({"error": str(e)})
 
     return execution
 
@@ -119,66 +140,355 @@ async def execute_multi_agent(
     return list(results)
 
 
-def extract_tool_calls(messages_json: str) -> list[dict[str, Any]]:
-    """Extract tool calls from execution messages JSON.
-
-    Parses all_messages_json to extract tool call information
-    for building execution hierarchy.
+def extract_agent_response(execution: AgentExecution) -> str:
+    """Extract the agent's final response from execution messages.
 
     Args:
-        messages_json: JSON string of messages from agent execution
+        execution: Completed agent execution with all_messages_json
 
     Returns:
-        List of extracted tool calls with metadata
+        The agent's final response text
 
-    Example:
-        >>> messages_str = '[{"kind":"request","parts":[{"type":"tool_call",'
-        >>> messages_str += '"tool_name":"check_prime","args":{"n":17}}]}]'
-        >>> calls = extract_tool_calls(messages_str)
-        >>> len(calls) > 0
-        True
+    Raises:
+        ValueError: If messages cannot be parsed or response not found
     """
-    tool_calls: list[dict[str, Any]] = []
+    if execution.all_messages_json is None:
+        raise ValueError("Execution has no messages (possibly timed out)")
 
     try:
-        messages = json.loads(messages_json)
-    except (json.JSONDecodeError, TypeError):
-        logger.debug("Could not parse messages JSON for tool call extraction")
-        return tool_calls
+        messages = json.loads(execution.all_messages_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse messages JSON: {e}") from e
+
+    if isinstance(messages, dict) and "error" in messages:
+        # Execution failed with an error
+        return f"Error: {messages['error']}"
+
+    if not isinstance(messages, list) or len(messages) == 0:
+        raise ValueError("No messages found in execution")
+
+    # Find the last assistant/model response message
+    # Pydantic AI messages typically have "role" field
+    for msg in reversed(messages):
+        if isinstance(msg, dict):
+            role = msg.get("role", "")
+            if role in ("assistant", "model-text-response", "model-structured-response"):
+                content = msg.get("content", "")
+                if isinstance(content, str) and content.strip():
+                    return content.strip()
+                # Handle structured content
+                if isinstance(content, dict):
+                    # Try to extract text from structured content
+                    if "text" in content:
+                        return str(content["text"]).strip()
+                    # Fallback: stringify the entire content
+                    return str(content).strip()
+
+    # If no assistant message found, return a description of the execution
+    return f"No response found. Status: {execution.status}"
+
+
+async def evaluate_execution(
+    evaluation_agent: Agent,
+    eval_config: EvaluationConfig,
+    task_prompt: str,
+    execution: AgentExecution,
+) -> EvaluationResult:
+    """Evaluate a completed agent execution.
+
+    Args:
+        evaluation_agent: Pydantic AI agent configured for evaluation
+        eval_config: Evaluation agent configuration with prompt template
+        task_prompt: Original task prompt given to the agent
+        execution: Completed agent execution to evaluate
+
+    Returns:
+        EvaluationResult with score and explanation
+
+    Raises:
+        ValueError: If execution_id is None or execution cannot be evaluated
+        ValueError: If evaluation response cannot be parsed
+    """
+    if execution.id is None:
+        raise ValueError("Cannot evaluate execution without database ID")
+
+    # Extract agent's response from messages
+    try:
+        agent_response = extract_agent_response(execution)
+    except ValueError as e:
+        # If we can't extract response, create a low-score evaluation
+        agent_response = f"Failed to extract response: {e}"
+
+    # Format evaluation prompt
+    formatted_prompt = format_evaluation_prompt(eval_config.prompt, task_prompt, agent_response)
+
+    # Run evaluation agent
+    result = await evaluation_agent.run(formatted_prompt)
+
+    # Extract response text from the last message
+    # Pydantic AI returns a RunResult, we need to get the text from messages
+    messages = result.new_messages()
+    response_text = ""
+
+    # Find the last assistant/model message
+    for msg in reversed(messages):
+        if hasattr(msg, "role") and hasattr(msg, "content"):
+            role = str(msg.role)
+            if role in ("assistant", "model-text-response"):
+                content = msg.content
+                if isinstance(content, str):
+                    response_text = content
+                    break
+
+    if not response_text:
+        raise ValueError("No response text found in evaluation agent result")
+
+    # Parse evaluation response
+    evaluation = parse_evaluation_response(response_text, execution.id)
+
+    return evaluation
+
+
+def extract_tool_hierarchy(execution: AgentExecution) -> list[ToolCallNode]:
+    """Extract tool call hierarchy from agent execution messages.
+
+    Parses the all_messages_json to build a tree structure of tool calls,
+    including nested calls and their results.
+
+    Args:
+        execution: Agent execution with all_messages_json
+
+    Returns:
+        List of root-level tool call nodes (tools called directly by agent)
+
+    Raises:
+        ValueError: If messages cannot be parsed
+    """
+    if execution.all_messages_json is None:
+        return []
+
+    try:
+        messages = json.loads(execution.all_messages_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse messages JSON: {e}") from e
 
     if not isinstance(messages, list):
-        logger.debug(f"Messages is not a list: {type(messages)}")
-        return tool_calls
+        # Handle error dict format
+        return []
 
-    logger.debug(f"Extracting tool calls from {len(messages)} messages")
+    # Extract tool calls and responses
+    tool_calls: dict[str, dict[str, Any]] = {}  # call_id -> tool call info
+    tool_responses: dict[str, Any] = {}  # call_id -> result
 
-    for message in messages:
-        if not isinstance(message, dict):
+    for msg in messages:
+        if not isinstance(msg, dict):
             continue
 
-        parts = message.get("parts", [])
-        if not isinstance(parts, list):
-            continue
+        role = msg.get("role", "")
 
-        for part in parts:
-            if not isinstance(part, dict):
-                continue
-
-            # Pydantic AI uses "part_kind" instead of "type"
-            # Check both for compatibility
-            part_kind = part.get("part_kind", "")
-            part_type = part.get("type", "")
-
-            if part_kind == "tool-call" or part_type == "tool_call":
-                tool_name = part.get("tool_name", "unknown")
-                args = part.get("args", {})
-                logger.debug(f"Found tool call: {tool_name} with args: {args}")
-                tool_call = {
-                    "tool_name": tool_name,
-                    "args": args,
-                    "timestamp": part.get("timestamp") or message.get("timestamp"),
+        if role == "tool_call":
+            call_id = msg.get("call_id", "")
+            if call_id:
+                tool_calls[call_id] = {
+                    "tool_name": msg.get("tool_name", "unknown"),
+                    "args": msg.get("args", {}),
+                    "call_id": call_id,
+                    "parent_id": msg.get("parent_id"),  # For nested calls
                 }
-                tool_calls.append(tool_call)
 
-    logger.debug(f"Extracted {len(tool_calls)} tool calls total")
-    return tool_calls
+        elif role == "tool_response":
+            call_id = msg.get("call_id", "")
+            if call_id:
+                tool_responses[call_id] = msg.get("content", {})
+
+    # Build hierarchy
+    nodes: dict[str, ToolCallNode] = {}
+    root_nodes: list[ToolCallNode] = []
+
+    # Create nodes for all tool calls
+    for call_id, call_info in tool_calls.items():
+        node: ToolCallNode = {
+            "tool_name": call_info["tool_name"],
+            "args": call_info["args"],
+            "result": tool_responses.get(call_id, {}),
+            "call_id": call_id,
+            "children": [],
+        }
+        nodes[call_id] = node
+
+        # If no parent, it's a root node
+        if not call_info.get("parent_id"):
+            root_nodes.append(node)
+
+    # Link children to parents
+    for call_id, call_info in tool_calls.items():
+        parent_id = call_info.get("parent_id")
+        if parent_id and parent_id in nodes:
+            parent_node = nodes[parent_id]
+            child_node = nodes[call_id]
+            parent_node["children"].append(child_node)
+
+    return root_nodes
+
+
+def calculate_tree_depth(nodes: list[ToolCallNode]) -> int:
+    """Calculate the maximum depth of tool call tree.
+
+    Args:
+        nodes: List of root-level tool call nodes
+
+    Returns:
+        Maximum depth (0 for empty tree, 1 for single level)
+    """
+    if not nodes:
+        return 0
+
+    def get_depth(node: ToolCallNode) -> int:
+        if not node["children"]:
+            return 1
+        return 1 + max(get_depth(child) for child in node["children"])
+
+    return max(get_depth(node) for node in nodes)
+
+
+def count_leaf_nodes(nodes: list[ToolCallNode]) -> int:
+    """Count the number of leaf nodes (nodes with no children).
+
+    Args:
+        nodes: List of root-level tool call nodes
+
+    Returns:
+        Number of leaf nodes
+    """
+    if not nodes:
+        return 0
+
+    def count_leaves(node: ToolCallNode) -> int:
+        if not node["children"]:
+            return 1
+        return sum(count_leaves(child) for child in node["children"])
+
+    return sum(count_leaves(node) for node in nodes)
+
+
+def format_tool_call(node: ToolCallNode, max_result_length: int = 100) -> str:
+    """Format a tool call node as a human-readable string.
+
+    Args:
+        node: Tool call node to format
+        max_result_length: Maximum length for result display (truncate if longer)
+
+    Returns:
+        Formatted string like "tool_name(arg=value) → result"
+    """
+    # Format arguments
+    args_parts = [f"{k}={v!r}" for k, v in node["args"].items()]
+    args_str = ", ".join(args_parts)
+
+    # Format result
+    result_str = str(node["result"])
+    if len(result_str) > max_result_length:
+        result_str = result_str[:max_result_length] + "..."
+
+    return f"{node['tool_name']}({args_str}) → {result_str}"
+
+
+class ExecutionLogEntry(TypedDict):
+    """Represents a single entry in the chronological execution log.
+
+    Attributes:
+        index: Position in chronological sequence (0-based)
+        type: Message type (user, assistant, tool_call, tool_response, model-text-response)
+        content: Message content (str for text, dict for structured data)
+        timestamp: Optional timestamp (if available in message)
+        tool_name: Optional tool name (for tool messages only)
+    """
+
+    index: int
+    type: str
+    content: Any
+    timestamp: str | None
+    tool_name: str | None
+
+
+def extract_execution_log(execution: AgentExecution) -> list[ExecutionLogEntry]:
+    """Extract chronological execution log from agent execution messages.
+
+    Parses all_messages_json to create a flat, chronological list of all events
+    (user messages, tool calls, tool responses, assistant messages) for detailed
+    execution history viewing.
+
+    Args:
+        execution: Agent execution with all_messages_json
+
+    Returns:
+        List of execution log entries in chronological order
+
+    Raises:
+        ValueError: If messages cannot be parsed
+    """
+    if execution.all_messages_json is None:
+        return []
+
+    try:
+        messages = json.loads(execution.all_messages_json)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse messages JSON: {e}") from e
+
+    if not isinstance(messages, list):
+        # Handle error dict format
+        return []
+
+    log_entries: list[ExecutionLogEntry] = []
+
+    for index, msg in enumerate(messages):
+        if not isinstance(msg, dict):
+            continue
+
+        # Extract common fields
+        msg_type = str(msg.get("role", "unknown"))
+        timestamp = msg.get("timestamp")
+        tool_name = msg.get("tool_name")
+        content = msg.get("content", "")
+
+        # Create log entry
+        entry: ExecutionLogEntry = {
+            "index": index,
+            "type": msg_type,
+            "content": content,
+            "timestamp": timestamp if isinstance(timestamp, str) else None,
+            "tool_name": tool_name if isinstance(tool_name, str) else None,
+        }
+
+        log_entries.append(entry)
+
+    return log_entries
+
+
+def format_log_entry(entry: ExecutionLogEntry, max_content_length: int = 200) -> str:
+    """Format an execution log entry as a human-readable string.
+
+    Args:
+        entry: Execution log entry to format
+        max_content_length: Maximum length for content display (truncate if longer)
+
+    Returns:
+        Formatted string like "[user] Check if 17 is prime" or
+        "[tool_call:check_prime] {n: 17}"
+    """
+    # Format type with tool name if applicable
+    type_str = f"{entry['type']}:{entry['tool_name']}" if entry["tool_name"] else entry["type"]
+
+    # Format content
+    content = entry["content"]
+    content_str = str(content)
+
+    # Truncate if too long
+    if len(content_str) > max_content_length:
+        content_str = content_str[:max_content_length] + "..."
+
+    # Include timestamp if available
+    if entry["timestamp"]:
+        return f"[{entry['timestamp']}] [{type_str}] {content_str}"
+    else:
+        return f"[{type_str}] {content_str}"

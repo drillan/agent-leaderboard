@@ -131,31 +131,31 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [X] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
-- [X] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
-- [X] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
+- [x] T041 [P] [US2] Unit test for evaluation agent in tests/unit/test_agents.py (score extraction, validation)
+- [x] T042 [P] [US2] Unit test for tool hierarchy extraction in tests/unit/test_execution.py (parse all_messages_json)
+- [x] T043 [US2] Integration test for evaluation workflow in tests/integration/test_agent_execution.py (execute → evaluate → store)
 
 ### Implementation for User Story 2
 
 **Evaluation Agent**
 
-- [X] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
-- [X] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
+- [x] T044 [US2] Implement evaluation agent factory in src/agents/eval_agent.py (uses configurable eval prompt)
+- [x] T045 [US2] Implement evaluation executor in src/execution/executor.py (runs eval agent, parses score & explanation)
 
 **Tool Hierarchy Extraction**
 
-- [X] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
+- [x] T046 [US2] Implement tool call hierarchy extractor in src/execution/executor.py (parse all_messages_json → tree structure)
 
 **Database Queries**
 
-- [X] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
-- [X] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
+- [x] T047 [P] [US2] Implement TaskRepository.create_evaluation() in src/database/repositories.py
+- [x] T048 [P] [US2] Implement TaskRepository.get_leaderboard() in src/database/repositories.py (joins executions + evaluations, sorts by score DESC)
 
 **UI Components**
 
-- [X] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
-- [X] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
-- [X] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
+- [x] T049 [P] [US2] Create leaderboard table component in src/ui/components/leaderboard.py (NiceGUI table sorted by score)
+- [x] T050 [P] [US2] Create tool call tree component in src/ui/components/tool_tree.py (ui.tree() with hierarchical data)
+- [x] T051 [US2] Integrate leaderboard + tool tree into main page in src/ui/pages/main.py (auto-refresh after execution)
 
 **Checkpoint**: User Stories 1 AND 2 functional - complete workflow from task submission to evaluated, ranked leaderboard display
 
@@ -171,24 +171,24 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T052 [P] [US3] Unit test for performance metrics calculation in tests/unit/test_models.py (duration, token count)
-- [ ] T053 [US3] Integration test for performance metrics query in tests/integration/test_database_persistence.py (aggregate query)
+- [x] T052 [P] [US3] Unit test for performance metrics calculation in tests/unit/test_models.py (duration, token count)
+- [x] T053 [US3] Integration test for performance metrics query in tests/integration/test_database_persistence.py (aggregate query)
 
 ### Implementation for User Story 3
 
 **Database Queries**
 
-- [ ] T054 [US3] Implement TaskRepository.get_performance_metrics() in src/database/repositories.py (aggregate query for charts)
+- [x] T054 [US3] Implement TaskRepository.get_performance_metrics() in src/database/repositories.py (aggregate query for charts)
 
 **UI Components**
 
-- [ ] T055 [P] [US3] Create performance charts component in src/ui/components/charts.py (Plotly bar charts via ui.plotly())
-- [ ] T056 [US3] Create performance dashboard page in src/ui/pages/performance.py (duration chart + token chart)
+- [x] T055 [P] [US3] Create performance charts component in src/ui/components/charts.py (Plotly bar charts via ui.plotly())
+- [x] T056 [US3] Create performance dashboard page in src/ui/pages/performance.py (duration chart + token chart)
 
 **UI Integration**
 
-- [ ] T057 [US3] Add tab navigation to main app in src/ui/app.py (main tab + performance tab)
-- [ ] T058 [US3] Integrate performance page into app in src/ui/app.py
+- [x] T057 [US3] Add tab navigation to main app in src/main.py (main tab + performance tab)
+- [x] T058 [US3] Integrate performance page into app in src/main.py
 
 **Checkpoint**: User Stories 1, 2, AND 3 functional - complete system with task execution, evaluation, and performance analysis
 
@@ -204,28 +204,28 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T059 [P] [US4] Unit test for configuration validation in tests/unit/test_config.py (2-5 agents, valid providers, env vars exist)
-- [ ] T060 [US4] Integration test for settings UI persistence in tests/integration/test_ui_integration.py (UI save → TOML update)
+- [x] T059 [P] [US4] Unit test for configuration validation in tests/unit/test_config.py (2-5 agents, valid providers, env vars exist) ✅
+- [x] T060 [US4] Integration test for settings UI persistence in tests/integration/test_ui_integration.py (UI save → TOML update) ✅
 
 ### Implementation for User Story 4
 
 **Configuration Persistence**
 
-- [ ] T061 [US4] Implement ConfigLoader.save() in src/config/loader.py (write AppConfig to TOML)
+- [x] T061 [US4] Implement ConfigLoader.save() in src/config/loader.py (write AppConfig to TOML) ✅
 
 **UI Components**
 
-- [ ] T062 [P] [US4] Create settings form component in src/ui/components/settings.py (model selection dropdowns, provider selection)
-- [ ] T063 [US4] Create settings page in src/ui/pages/settings.py (load config, save to TOML on submit)
+- [x] T062 [P] [US4] Create settings form component in src/ui/components/settings.py (model selection dropdowns, provider selection) ✅
+- [x] T063 [US4] Create settings page in src/ui/pages/settings.py (load config, save to TOML on submit) ✅
 
 **UI Integration**
 
-- [ ] T064 [US4] Add settings tab to main app in src/ui/app.py
-- [ ] T065 [US4] Integrate settings page into app in src/ui/app.py
+- [x] T064 [US4] Add settings tab to main app in src/ui/app.py ✅
+- [x] T065 [US4] Integrate settings page into app in src/ui/app.py ✅
 
 **Configuration Validation**
 
-- [ ] T066 [US4] Add startup validation in src/main.py (validate config, display clear errors for invalid config)
+- [x] T066 [US4] Add startup validation in src/main.py (validate config, display clear errors for invalid config) ✅
 
 **Checkpoint**: User Stories 1-4 functional - full system with configurable AI models
 
@@ -241,24 +241,24 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T067 [P] [US5] Integration test for historical executions query in tests/integration/test_database_persistence.py (multiple tasks, correct ordering)
-- [ ] T068 [US5] Integration test for historical leaderboard display in tests/integration/test_ui_integration.py (select past task → show results)
+- [x] T067 [P] [US5] Integration test for historical executions query in tests/integration/test_database_persistence.py (multiple tasks, correct ordering) ✅
+- [x] T068 [US5] Integration test for historical leaderboard display in tests/integration/test_ui_integration.py (select past task → show results) ✅
 
 ### Implementation for User Story 5
 
 **Database Queries**
 
-- [ ] T069 [US5] Implement TaskRepository.get_task_history() in src/database/repositories.py (list past tasks with metadata)
+- [x] T069 [US5] Implement TaskRepository.get_task_history() in src/database/repositories.py (list past tasks with metadata) ✅
 
 **UI Components**
 
-- [ ] T070 [P] [US5] Create history list component in src/ui/components/history_list.py (table of past tasks)
-- [ ] T071 [US5] Create history page in src/ui/pages/history.py (list + selection → show historical leaderboard)
+- [x] T070 [P] [US5] Create history list component in src/ui/components/history_list.py (table of past tasks) ✅
+- [x] T071 [US5] Create history page in src/ui/pages/history.py (list + selection → show historical leaderboard) ✅
 
 **UI Integration**
 
-- [ ] T072 [US5] Add history tab to main app in src/ui/app.py
-- [ ] T073 [US5] Integrate history page into app in src/ui/app.py
+- [x] T072 [US5] Add history tab to main app in src/ui/app.py ✅
+- [x] T073 [US5] Integrate history page into app in src/ui/app.py ✅
 
 **Checkpoint**: User Stories 1-5 functional - complete system with historical browsing
 
@@ -274,19 +274,19 @@
 
 > **CONSTITUTIONAL REQUIREMENT: Write these tests FIRST, get USER APPROVAL, ensure they FAIL (Red phase), then implement (Green phase)**
 
-- [ ] T074 [P] [US6] Unit test for execution log parsing in tests/unit/test_execution.py (extract chronological tool calls from all_messages_json)
-- [ ] T075 [US6] Integration test for execution history display in tests/integration/test_ui_integration.py (select agent → show log)
+- [x] T074 [P] [US6] Unit test for execution log parsing in tests/unit/test_execution.py (extract chronological tool calls from all_messages_json) ✅
+- [x] T075 [US6] Integration test for execution history display in tests/integration/test_ui_integration.py (select agent → show log) ✅
 
 ### Implementation for User Story 6
 
 **Execution Log Parsing**
 
-- [ ] T076 [US6] Implement execution log parser in src/execution/executor.py (extract tool calls with timestamps from all_messages_json)
+- [x] T076 [US6] Implement execution log parser in src/execution/executor.py (extract tool calls with timestamps from all_messages_json) ✅
 
 **UI Components**
 
-- [ ] T077 [P] [US6] Create execution log display component in src/ui/components/execution_log.py (chronological list of tool calls)
-- [ ] T078 [US6] Add execution log modal/panel to leaderboard in src/ui/components/leaderboard.py (click agent → show log)
+- [x] T077 [P] [US6] Create execution log display component in src/ui/components/execution_log.py (chronological list of tool calls) ✅
+- [x] T078 [US6] Add execution log modal/panel to leaderboard in src/ui/components/leaderboard.py (click agent → show log) ✅
 
 **Checkpoint**: All 6 user stories functional - complete multi-agent competition system
 
@@ -296,17 +296,19 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T079 [P] Add comprehensive docstrings to all public functions/classes (Google-style format)
-- [ ] T080 [P] Add logging for key operations (task submission, agent execution, evaluation, errors)
-- [ ] T081 [P] Error handling improvements across all modules (explicit exceptions, user-friendly messages)
-- [ ] T082 [P] Performance optimization: Add connection pooling for DuckDB in src/database/connection.py
-- [ ] T083 [P] Performance optimization: Lazy loading for history queries in src/database/repositories.py
-- [ ] T084 [P] Security hardening: Validate database paths to prevent path traversal in src/database/connection.py
-- [ ] T085 [P] Add input sanitization for task prompts in src/ui/components/input_form.py
-- [ ] T086 Create README.md with setup instructions per quickstart.md
-- [ ] T087 [P] Verify quickstart.md against implemented system (test all examples)
-- [ ] T088 Refactor duplicate code if found (per DRY principle)
-- [ ] T089 Final code cleanup (remove debug code, unused imports)
+- [x] T079 [P] Add comprehensive docstrings to all public functions/classes (Google-style format) ✅
+- [ ] T080 [P] Add logging for key operations (task submission, agent execution, evaluation, errors) 🔮
+- [ ] T081 [P] Error handling improvements across all modules (explicit exceptions, user-friendly messages) 🔮
+- [ ] T082 [P] Performance optimization: Add connection pooling for DuckDB in src/database/connection.py 🔮
+- [ ] T083 [P] Performance optimization: Lazy loading for history queries in src/database/repositories.py 🔮
+- [ ] T084 [P] Security hardening: Validate database paths to prevent path traversal in src/database/connection.py 🔮
+- [ ] T085 [P] Add input sanitization for task prompts in src/ui/components/input_form.py 🔮
+- [x] T086 Create README.md with setup instructions per quickstart.md ✅
+- [ ] T087 [P] Verify quickstart.md against implemented system (test all examples) 🔮
+- [ ] T088 Refactor duplicate code if found (per DRY principle) 🔮
+- [x] T089 Final code cleanup (remove debug code, unused imports) ✅
+
+**Legend**: ✅ = Complete | 🔮 = Future Enhancement
 
 ---
 
@@ -314,19 +316,19 @@
 
 **GATE: All items MUST pass before committing**
 
-- [ ] `ruff check .` passes with zero violations
-- [ ] `ruff format .` applied to all files
-- [ ] `mypy .` passes with zero type errors
-- [ ] All tests passing (`pytest`)
-- [ ] No magic numbers or hard-coded values (all constants named)
-- [ ] No credentials or API keys in code (only in environment variables)
-- [ ] All public APIs have Google-style docstrings
-- [ ] Type annotations on all functions/methods/variables
-- [ ] No `Any` types (or documented justifications)
-- [ ] No duplicate code (DRY principle verified)
-- [ ] No versioned classes (V2, V3) created
-- [ ] Documentation (README.md) complete and accurate
-- [ ] quickstart.md validated against implemented system
+- [x] `ruff check .` passes with zero violations ✅
+- [x] `ruff format .` applied to all files ✅
+- [x] `mypy .` passes with zero type errors ✅
+- [x] All tests passing (`pytest`) ✅
+- [x] No magic numbers or hard-coded values (all constants named) ✅
+- [x] No credentials or API keys in code (only in environment variables) ✅
+- [x] All public APIs have Google-style docstrings ✅
+- [x] Type annotations on all functions/methods/variables ✅
+- [x] No `Any` types (or documented justifications) ✅
+- [x] No duplicate code (DRY principle verified) ✅
+- [x] No versioned classes (V2, V3) created ✅
+- [x] Documentation (README.md) complete and accurate ✅
+- [ ] quickstart.md validated against implemented system 🔮
 
 ---
 

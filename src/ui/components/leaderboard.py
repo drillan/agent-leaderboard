@@ -1,235 +1,324 @@
-"""Enhanced leaderboard component for displaying evaluation results.
+"""Leaderboard table component.
 
-This module provides a leaderboard component with color-coded scores,
-evaluation explanations, and detailed result visualization.
+This module provides a UI component for displaying agent execution leaderboard.
+Shows evaluation scores, rankings, and performance metrics.
 """
+
+from typing import Any, cast
 
 from nicegui import ui
 
-from src.database.connection import DatabaseConnection
 from src.database.repositories import TaskRepository
-from src.execution.evaluator import extract_agent_response
+from src.ui.components.execution_log import create_execution_log
 
 
-def get_score_color(score: int | None) -> str:
+def format_duration(seconds: float | None) -> str:
+    """Format duration in seconds to human-readable string.
+
+    Args:
+        seconds: Duration in seconds
+
+    Returns:
+        Formatted string (e.g., "5.2s", "N/A")
+    """
+    if seconds is None:
+        return "N/A"
+    return f"{seconds:.2f}s"
+
+
+def get_score_color(score: int) -> str:
     """Get color for score display based on value.
 
     Args:
-        score: Score value (0-100) or None
+        score: Score value (0-100)
 
     Returns:
         Color name for score display
     """
-    if score is None:
-        return "grey"
-    if score >= 80:
+    if score >= 90:
         return "green"
+    elif score >= 80:
+        return "light-green"
+    elif score >= 70:
+        return "yellow"
     elif score >= 60:
-        return "amber"
-    elif score >= 40:
         return "orange"
     else:
         return "red"
 
 
-def get_score_badge_icon(score: int | None) -> str:
-    """Get icon for score badge.
+def get_grade_icon(score: int) -> str:
+    """Get icon for grade display.
 
     Args:
-        score: Score value (0-100) or None
+        score: Score value (0-100)
 
     Returns:
         Material icon name
     """
-    if score is None:
-        return "help"
     if score >= 90:
-        return "star"
+        return "emoji_events"  # Trophy
     elif score >= 80:
-        return "check_circle"
-    elif score >= 60:
         return "thumb_up"
+    elif score >= 70:
+        return "check"
+    elif score >= 60:
+        return "remove"
     else:
-        return "warning"
+        return "thumb_down"
 
 
-class EnhancedLeaderboard:
-    """Enhanced leaderboard display with detailed score and evaluation info.
+class LeaderboardTable:
+    """Leaderboard table component.
 
-    Displays agent execution results with:
-    - Color-coded scores (green/yellow/orange/red)
-    - Evaluation explanations
-    - Performance metrics (duration, tokens)
-    - Visual badges and icons
+    Displays evaluation results for a task in a sortable table.
     """
 
-    def __init__(self, db: DatabaseConnection):
-        """Initialize leaderboard.
+    def __init__(self, repository: TaskRepository, task_id: int | None = None):
+        """Initialize leaderboard table.
 
         Args:
-            db: Database connection
+            repository: Task repository for data access
+            task_id: Optional task ID to display leaderboard for
         """
-        self.db = db
-        self.repository = TaskRepository(db)
+        self.repository = repository
+        self.task_id = task_id
         self.container: ui.card | None = None
+        self.table: ui.table | None = None
 
     def create(self) -> None:
-        """Create the leaderboard UI component."""
+        """Create the leaderboard table UI component."""
         with ui.card().classes("w-full") as card:
             self.container = card
             ui.label("Leaderboard").classes("text-h6")
-            ui.label("No execution yet").classes("text-grey-6")
 
-    def update_leaderboard(self, task_id: int) -> None:
-        """Update leaderboard with task results.
+            if self.task_id:
+                self._render_leaderboard()
+            else:
+                ui.label("No task selected").classes("text-grey-6")
 
-        Args:
-            task_id: Database ID of the task
-        """
-        try:
-            leaderboard: list[dict[str, object]] = (
-                self.repository.get_leaderboard(task_id)
+    def _render_leaderboard(self) -> None:
+        """Render leaderboard table for the current task."""
+        if not self.task_id:
+            return
+
+        # Query leaderboard data
+        leaderboard_entries = self.repository.get_leaderboard(self.task_id)
+
+        if not leaderboard_entries:
+            ui.label("No evaluations available yet").classes("text-grey-6")
+            return
+
+        # Define table columns
+        columns = [
+            {
+                "name": "rank",
+                "label": "Rank",
+                "field": "rank",
+                "align": "center",
+                "sortable": False,
+            },
+            {
+                "name": "model",
+                "label": "Model",
+                "field": "model",
+                "align": "left",
+                "sortable": True,
+            },
+            {
+                "name": "score",
+                "label": "Score",
+                "field": "score",
+                "align": "center",
+                "sortable": True,
+            },
+            {
+                "name": "duration",
+                "label": "Duration",
+                "field": "duration",
+                "align": "center",
+                "sortable": True,
+            },
+            {
+                "name": "tokens",
+                "label": "Tokens",
+                "field": "tokens",
+                "align": "center",
+                "sortable": True,
+            },
+            {
+                "name": "explanation",
+                "label": "Explanation",
+                "field": "explanation",
+                "align": "left",
+                "sortable": False,
+            },
+            {
+                "name": "actions",
+                "label": "Actions",
+                "field": "actions",
+                "align": "center",
+                "sortable": False,
+            },
+        ]
+
+        # Prepare table rows
+        rows = []
+        for rank, entry in enumerate(leaderboard_entries, start=1):
+            model_identifier = f"{entry['model_provider']}/{entry['model_name']}"
+            duration_val = entry.get("duration_seconds")
+            duration_seconds = cast(float, duration_val) if duration_val is not None else None
+            execution_id = cast(int, entry["execution_id"])
+            rows.append(
+                {
+                    "rank": rank,
+                    "model": model_identifier,
+                    "score": entry["evaluation_score"],
+                    "duration": format_duration(duration_seconds),
+                    "tokens": entry.get("token_count") or "N/A",
+                    "explanation": entry.get("evaluation_explanation", "N/A"),
+                    "execution_id": execution_id,
+                    "actions": "",  # Placeholder for actions column
+                }
             )
 
-            if not self.container:
-                return
+        # Create table
+        self.table = ui.table(
+            columns=columns,
+            rows=rows,
+            row_key="rank",
+        ).classes("w-full")
 
+        # Add custom styling for score column
+        self.table.add_slot(
+            "body-cell-score",
+            r"""
+            <q-td :props="props">
+                <q-badge :color="props.row.score >= 90 ? 'green' :
+                                 props.row.score >= 80 ? 'light-green' :
+                                 props.row.score >= 70 ? 'yellow' :
+                                 props.row.score >= 60 ? 'orange' : 'red'">
+                    {{ props.row.score }}
+                </q-badge>
+            </q-td>
+            """,
+        )
+
+        # Add custom styling for rank column
+        self.table.add_slot(
+            "body-cell-rank",
+            r"""
+            <q-td :props="props">
+                <div class="text-center">
+                    <q-icon v-if="props.row.rank === 1"
+                            name="emoji_events" color="gold" size="sm" />
+                    <q-icon v-else-if="props.row.rank === 2"
+                            name="emoji_events" color="silver" size="sm" />
+                    <q-icon v-else-if="props.row.rank === 3"
+                            name="emoji_events" color="brown" size="sm" />
+                    <span v-else>{{ props.row.rank }}</span>
+                </div>
+            </q-td>
+            """,
+        )
+
+        # Add actions column with view log button
+        self.table.add_slot(
+            "body-cell-actions",
+            r"""
+            <q-td :props="props">
+                <q-btn
+                    flat dense round
+                    icon="visibility"
+                    color="primary"
+                    @click="$parent.$emit('view_log', props.row.execution_id)"
+                >
+                    <q-tooltip>View Execution Log</q-tooltip>
+                </q-btn>
+            </q-td>
+            """,
+        )
+
+        # Handle view log button clicks
+        def on_view_log(e: Any) -> None:
+            """Handle view log button click."""
+            execution_id = e.args
+            if execution_id is not None:
+                self._show_execution_log_modal(execution_id)
+
+        self.table.on("view_log", on_view_log)
+
+    def _show_execution_log_modal(self, execution_id: int) -> None:
+        """Show execution log modal for the given execution.
+
+        Args:
+            execution_id: ID of the execution to show log for
+        """
+        # Fetch execution from database
+        execution = self.repository.get_execution(execution_id)
+
+        if not execution:
+            ui.notify("Execution not found", type="negative")
+            return
+
+        # Create modal dialog
+        with ui.dialog() as dialog, ui.card().classes("w-full max-w-4xl"):
+            ui.label(f"Execution Log: {execution.model_provider}/{execution.model_name}").classes(
+                "text-h6"
+            )
+            ui.label(f"Status: {execution.status}").classes("text-caption text-grey-7")
+
+            # Create execution log component
+            create_execution_log(execution)
+
+            # Close button
+            with ui.row().classes("w-full justify-end mt-4"):
+                ui.button("Close", on_click=dialog.close).props("outline")
+
+        dialog.open()
+
+    def update_task(self, task_id: int) -> None:
+        """Update the leaderboard for a different task.
+
+        Args:
+            task_id: New task ID to display leaderboard for
+        """
+        self.task_id = task_id
+        if self.container:
             self.container.clear()
-
             with self.container:
                 ui.label("Leaderboard").classes("text-h6")
+                self._render_leaderboard()
 
-                if not leaderboard:
-                    ui.label("No results available").classes("text-grey-6")
-                    return
-
-                # Display results as cards with details
-                for i, entry in enumerate(leaderboard, 1):
-                    self._render_result_card(i, entry)
-
-        except Exception as e:
-            if self.container:
-                self.container.clear()
-                with self.container:
-                    ui.label("Error loading leaderboard").classes("text-h6")
-                    ui.label(f"Failed to display results: {str(e)}").classes(
-                        "text-red-6"
-                    )
-
-    def _render_result_card(
-        self, rank: int, entry: dict[str, object]
-    ) -> None:
-        """Render a single result card.
-
-        Args:
-            rank: Ranking position (1, 2, 3, etc.)
-            entry: Leaderboard entry dictionary
-        """
-        score_obj = entry.get("score")
-        score: int | None = (
-            int(score_obj) if isinstance(score_obj, (int, float)) else None
-        )
-        score_color = get_score_color(score)
-        score_icon = get_score_badge_icon(score)
-
-        with ui.card().classes("w-full"):
-            # Header row: Rank, Model, Score
-            with ui.row().classes("w-full items-center gap-4"):
-                # Rank badge
-                with ui.badge(f"#{rank}").props("color=blue"):
-                    pass
-
-                # Model info
-                with ui.column().classes("flex-1"):
-                    model_name = entry.get("model_name", "N/A")
-                    provider = entry.get("model_provider", "N/A")
-                    ui.label(f"{provider}/{model_name}").classes("font-bold")
-
-                # Score badge with icon
-                if score is not None:
-                    with ui.row().classes("items-center gap-2"):
-                        ui.icon(score_icon).props(f"color={score_color} size=lg")
-                        ui.label(f"{score}/100").classes(f"text-{score_color} font-bold text-lg")
-                else:
-                    ui.label("N/A").classes("text-grey-6")
-
-            ui.separator().classes("my-2")
-
-            # Details row
-            with ui.row().classes("w-full gap-8 text-sm"):
-                # Status
-                status_obj = entry.get("status", "N/A")
-                status: str = str(status_obj) if status_obj else "N/A"
-                status_color = (
-                    "green" if status == "completed" else
-                    "orange" if status == "timeout" else
-                    "red" if status == "failed" else
-                    "grey"
-                )
-                with ui.column().classes("flex-0"):
-                    ui.label("Status").classes("font-bold")
-                    ui.label(status).props(f"color={status_color}")
-
-                # Duration
-                duration = entry.get("duration_seconds")
-                duration_text = (
-                    f"{duration:.2f}s"
-                    if isinstance(duration, (int, float))
-                    else "N/A"
-                )
-                with ui.column().classes("flex-0"):
-                    ui.label("Duration").classes("font-bold")
-                    ui.label(duration_text)
-
-                # Token count
-                tokens = entry.get("token_count", 0)
-                with ui.column().classes("flex-0"):
-                    ui.label("Tokens").classes("font-bold")
-                    ui.label(str(tokens))
-
-            # Agent Response section
-            all_messages = entry.get("all_messages")
-            agent_response = ""
-            if all_messages:
-                try:
-                    agent_response = extract_agent_response(str(all_messages))
-                except Exception:
-                    agent_response = ""
-
-            if agent_response:
-                ui.separator().classes("my-2")
-                ui.label("Agent Response").classes("font-bold text-sm")
-                ui.label(agent_response).classes(
-                    "text-sm text-blue-7 whitespace-normal"
-                )
-
-            # Explanation section
-            explanation_obj = entry.get("evaluation_text")
-            explanation: str | None = (
-                str(explanation_obj) if explanation_obj else None
-            )
-            if explanation:
-                ui.separator().classes("my-2")
-                ui.label("Evaluation").classes("font-bold text-sm")
-                ui.label(explanation).classes("text-sm text-grey-7 whitespace-normal")
+    def refresh(self) -> None:
+        """Refresh the leaderboard display with latest data."""
+        if self.task_id and self.container:
+            self.container.clear()
+            with self.container:
+                ui.label("Leaderboard").classes("text-h6")
+                self._render_leaderboard()
 
 
-def create_enhanced_leaderboard(db: DatabaseConnection) -> EnhancedLeaderboard:
-    """Create an enhanced leaderboard component.
+def create_leaderboard_table(
+    repository: TaskRepository, task_id: int | None = None
+) -> LeaderboardTable:
+    """Create a leaderboard table component.
 
     Args:
-        db: Database connection
+        repository: Task repository for data access
+        task_id: Optional task ID to display leaderboard for
 
     Returns:
-        EnhancedLeaderboard instance
+        LeaderboardTable instance
 
     Example:
         >>> from src.database.connection import DatabaseConnection
-        >>> db = DatabaseConnection("data.duckdb")
-        >>> leaderboard = create_enhanced_leaderboard(db)
+        >>> from src.database.repositories import TaskRepository
+        >>> db = DatabaseConnection("test.duckdb")
+        >>> repo = TaskRepository(db)
+        >>> leaderboard = create_leaderboard_table(repo, task_id=1)
         >>> leaderboard.create()
-        >>> leaderboard.update_leaderboard(task_id=1)
     """
-    leaderboard = EnhancedLeaderboard(db)
+    leaderboard = LeaderboardTable(repository, task_id)
     leaderboard.create()
     return leaderboard

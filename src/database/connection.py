@@ -72,9 +72,7 @@ class DatabaseConnection:
 
         if result is None:
             # Record schema version
-            conn.execute(
-                "INSERT INTO schema_metadata (version) VALUES (?)", [SCHEMA_VERSION]
-            )
+            conn.execute("INSERT INTO schema_metadata (version) VALUES (?)", [SCHEMA_VERSION])
 
         conn.commit()
 

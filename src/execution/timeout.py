@@ -10,9 +10,7 @@ from typing import Any, TypeVar
 T = TypeVar("T")
 
 
-async def with_timeout(
-    coro: Coroutine[Any, Any, T], timeout_seconds: float
-) -> T | None:
+async def with_timeout(coro: Coroutine[Any, Any, T], timeout_seconds: float) -> T | None:
     """Execute an async coroutine with a timeout.
 
     Args:

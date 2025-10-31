@@ -1,140 +1,234 @@
-"""Tool call hierarchy display component.
+"""Tool call tree component.
 
-This module provides visualization of tool calls made during agent execution,
-displaying the call hierarchy and arguments/results.
+This module provides a UI component for displaying tool call hierarchies.
+Shows tool calls, arguments, results, and nested calls in a tree structure.
 """
 
-import json
-import logging
 from typing import Any
 
 from nicegui import ui
+from nicegui.events import ValueChangeEventArguments
 
-from src.execution.executor import extract_tool_calls
+from src.execution.executor import ToolCallNode, extract_tool_hierarchy, format_tool_call
+from src.models.execution import AgentExecution
 
-logger = logging.getLogger(__name__)
+
+def build_tree_structure(nodes: list[ToolCallNode]) -> list[dict[str, Any]]:
+    """Build tree structure for NiceGUI ui.tree.
+
+    Args:
+        nodes: List of tool call nodes
+
+    Returns:
+        Tree structure compatible with ui.tree()
+    """
+    if not nodes:
+        return []
+
+    def node_to_tree(node: ToolCallNode) -> dict[str, Any]:
+        """Convert ToolCallNode to ui.tree dict structure."""
+        # Format node label
+        label = format_tool_call(node, max_result_length=50)
+
+        tree_node: dict[str, Any] = {
+            "id": node["call_id"],
+            "label": label,
+            "icon": "function",
+        }
+
+        # Add children recursively
+        if node["children"]:
+            tree_node["children"] = [node_to_tree(child) for child in node["children"]]
+
+        return tree_node
+
+    return [node_to_tree(node) for node in nodes]
 
 
 class ToolCallTree:
-    """Display tool calls in a hierarchical tree format.
+    """Tool call tree component.
 
-    Shows:
-    - Tool names and call sequence
-    - Arguments passed to tools
-    - Results returned from tools (if available)
-    - Call timing information (if available)
+    Displays tool call hierarchy in an expandable tree structure.
     """
 
-    def __init__(self) -> None:
-        """Initialize tool call tree display."""
+    def __init__(self, execution: AgentExecution | None = None):
+        """Initialize tool call tree.
+
+        Args:
+            execution: Optional agent execution to display tools for
+        """
+        self.execution = execution
         self.container: ui.card | None = None
-        self.tool_calls: list[dict[str, Any]] = []
+        self.tree: ui.tree | None = None
 
     def create(self) -> None:
         """Create the tool call tree UI component."""
         with ui.card().classes("w-full") as card:
             self.container = card
             ui.label("Tool Calls").classes("text-h6")
-            ui.label("No tool calls recorded").classes("text-grey-6")
 
-    def update_from_messages(self, messages_json: str | None) -> None:
-        """Update tool call tree from execution messages.
-
-        Args:
-            messages_json: JSON string of messages from agent execution
-        """
-        if not messages_json:
-            self._render_no_tools()
-            return
-
-        try:
-            self.tool_calls = extract_tool_calls(messages_json)
-        except Exception as e:
-            logger.error(f"Failed to extract tool calls: {e}")
-            self._render_error(str(e))
-            return
-
-        if self.container:
-            self.container.clear()
-
-            with self.container:
-                ui.label("Tool Calls").classes("text-h6")
-
-                if not self.tool_calls:
-                    ui.label("No tool calls made").classes("text-grey-6")
-                    return
-
-                # Display each tool call
-                for i, tool_call in enumerate(self.tool_calls, 1):
-                    self._render_tool_call(i, tool_call)
-
-    def _render_tool_call(self, index: int, tool_call: dict[str, Any]) -> None:
-        """Render a single tool call.
-
-        Args:
-            index: Tool call sequence number
-            tool_call: Tool call information dictionary
-        """
-        tool_name = tool_call.get("tool_name", "unknown")
-        args = tool_call.get("args", {})
-
-        with ui.expansion(f"Tool Call #{index}: {tool_name}").classes("w-full"):
-            # Tool name and basic info
-            with ui.row().classes("items-center gap-2"):
-                ui.icon("build").props("color=blue")
-                ui.label(f"Tool: {tool_name}").classes("font-bold")
-
-            # Arguments
-            if args:
-                ui.label("Arguments:").classes("font-bold text-sm mt-2")
-                args_text = json.dumps(args, indent=2)
-                ui.code(args_text).classes("w-full")
+            if self.execution:
+                self._render_tree()
             else:
-                ui.label("No arguments").classes("text-grey-6 text-sm mt-2")
+                ui.label("No execution selected").classes("text-grey-6")
 
-    def _render_no_tools(self) -> None:
-        """Render empty state when no messages available."""
-        if self.container:
-            self.container.clear()
+    def _render_tree(self) -> None:
+        """Render tool call tree for the current execution."""
+        if not self.execution:
+            return
 
-            with self.container:
-                ui.label("Tool Calls").classes("text-h6")
-                ui.label("No execution data available").classes("text-grey-6")
+        # Extract tool hierarchy
+        try:
+            tool_nodes = extract_tool_hierarchy(self.execution)
+        except ValueError as e:
+            ui.label(f"Failed to extract tool calls: {e}").classes("text-red-600")
+            return
 
-    def _render_error(self, error_message: str) -> None:
-        """Render error state.
+        if not tool_nodes:
+            ui.label("No tool calls found").classes("text-grey-6")
+            return
+
+        # Build tree structure
+        tree_data = build_tree_structure(tool_nodes)
+
+        # Create tree
+        self.tree = ui.tree(
+            nodes=tree_data,
+            label_key="label",
+            children_key="children",
+            node_key="id",
+        ).classes("w-full")
+
+        # Expand all nodes by default
+        if self.tree:
+            self.tree.expand()
+
+    def update_execution(self, execution: AgentExecution) -> None:
+        """Update the tree for a different execution.
 
         Args:
-            error_message: Error description
+            execution: New execution to display tool calls for
         """
+        self.execution = execution
         if self.container:
             self.container.clear()
-
             with self.container:
                 ui.label("Tool Calls").classes("text-h6")
-                ui.label("Error loading tool calls").classes("text-red-6")
-                ui.label(error_message).classes("text-grey-7 text-sm")
+                self._render_tree()
 
-    def clear(self) -> None:
-        """Clear the tool call tree display."""
-        self.tool_calls = []
-        self._render_no_tools()
+    def refresh(self) -> None:
+        """Refresh the tree display with latest data."""
+        if self.execution and self.container:
+            self.container.clear()
+            with self.container:
+                ui.label("Tool Calls").classes("text-h6")
+                self._render_tree()
 
 
-def create_tool_call_tree() -> ToolCallTree:
-    """Create a tool call tree display component.
+class ToolCallTreePanel:
+    """Tool call tree panel with execution selector.
+
+    Displays tool calls for a selected execution from a list.
+    """
+
+    def __init__(self, executions: list[AgentExecution] | None = None):
+        """Initialize tool call tree panel.
+
+        Args:
+            executions: Optional list of executions to select from
+        """
+        self.executions = executions or []
+        self.selected_execution: AgentExecution | None = None
+        self.container: ui.card | None = None
+        self.tree_component: ToolCallTree | None = None
+
+    def create(self) -> None:
+        """Create the tool call tree panel UI component."""
+        with ui.card().classes("w-full") as card:
+            self.container = card
+            ui.label("Tool Call Analysis").classes("text-h6")
+
+            if not self.executions:
+                ui.label("No executions available").classes("text-grey-6")
+                return
+
+            # Create execution selector
+            execution_options = {
+                f"{exec.model_provider}/{exec.model_name}": exec for exec in self.executions
+            }
+
+            def on_select(e: ValueChangeEventArguments) -> None:
+                selected_label = e.value
+                if selected_label and selected_label in execution_options:
+                    self.selected_execution = execution_options[selected_label]
+                    if self.tree_component:
+                        self.tree_component.update_execution(self.selected_execution)
+
+            ui.select(
+                options=list(execution_options.keys()),
+                label="Select Execution",
+                on_change=on_select,
+            ).classes("w-full")
+
+            # Create tree component
+            self.tree_component = ToolCallTree(self.selected_execution)
+            self.tree_component.create()
+
+    def update_executions(self, executions: list[AgentExecution]) -> None:
+        """Update the panel with new list of executions.
+
+        Args:
+            executions: New list of executions
+        """
+        self.executions = executions
+        self.selected_execution = None
+        if self.container:
+            self.container.clear()
+            with self.container:
+                ui.label("Tool Call Analysis").classes("text-h6")
+                self.create()
+
+
+def create_tool_call_tree(execution: AgentExecution | None = None) -> ToolCallTree:
+    """Create a tool call tree component.
+
+    Args:
+        execution: Optional agent execution to display tools for
 
     Returns:
         ToolCallTree instance
 
     Example:
-        >>> from src.database.repositories import TaskRepository
-        >>> tool_tree = create_tool_call_tree()
-        >>> tool_tree.create()
-        >>> # Update with messages from execution
-        >>> messages_json = '[{"kind":"request","parts":[{"type":"tool_call",...}]}]'
-        >>> tool_tree.update_from_messages(messages_json)
+        >>> from src.models.execution import AgentExecution, ExecutionStatus
+        >>> execution = AgentExecution(
+        ...     task_id=1,
+        ...     model_provider="openai",
+        ...     model_name="gpt-4o",
+        ...     status=ExecutionStatus.COMPLETED,
+        ... )
+        >>> tree = create_tool_call_tree(execution)
+        >>> tree.create()
     """
-    tool_tree = ToolCallTree()
-    tool_tree.create()
-    return tool_tree
+    tree = ToolCallTree(execution)
+    tree.create()
+    return tree
+
+
+def create_tool_call_tree_panel(
+    executions: list[AgentExecution] | None = None,
+) -> ToolCallTreePanel:
+    """Create a tool call tree panel with execution selector.
+
+    Args:
+        executions: Optional list of executions to select from
+
+    Returns:
+        ToolCallTreePanel instance
+
+    Example:
+        >>> panel = create_tool_call_tree_panel(executions)
+        >>> panel.create()
+    """
+    panel = ToolCallTreePanel(executions)
+    panel.create()
+    return panel

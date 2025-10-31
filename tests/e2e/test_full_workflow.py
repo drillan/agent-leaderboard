@@ -13,8 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from src.database.connection import DatabaseConnection
-
 # These imports will be available after T029-T040 implementation
 # from src.agents.factory import TaskAgentFactory
 # from src.agents.orchestrator import ExecutionOrchestrator
@@ -46,9 +44,7 @@ def temp_db_path() -> str:
 class TestSingleTaskExecution:
     """Tests for single task execution workflow."""
 
-    def test_submit_and_execute_task_with_two_agents(
-        self, temp_db_path: str
-    ) -> None:
+    def test_submit_and_execute_task_with_two_agents(self, temp_db_path: str) -> None:
         """Test submitting a task and executing with 2 agents.
 
         Expected workflow:
@@ -307,9 +303,7 @@ class TestErrorHandling:
         # - Failed execution is not evaluated
         pass
 
-    def test_evaluation_failure_does_not_break_workflow(
-        self, temp_db_path: str
-    ) -> None:
+    def test_evaluation_failure_does_not_break_workflow(self, temp_db_path: str) -> None:
         """Test that evaluation failures don't break workflow.
 
         Expected workflow:

@@ -74,82 +74,49 @@ Explanation: [your explanation]
             )
 
         # Extract response text from Pydantic AI result
-        # The result object has various attributes, try to extract the text response
         response_text = ""
 
-        # Use print for guaranteed output to logs
         print(f"\n=== EVALUATION RESULT DEBUG ===")
         print(f"Result type: {type(result)}")
         print(f"Result: {result}")
-        print(f"Result attributes: {[a for a in dir(result) if not a.startswith('_')]}")
 
-        logger.debug(f"Result type: {type(result)}, Result: {result}")
-        logger.debug(f"Result attributes: {dir(result)}")
-
-        # Method 1: Try to access data attribute directly
+        # Method 1: Try to access output attribute directly (Pydantic AI result.output)
         try:
-            if hasattr(result, "data"):
-                response_text = str(result.data)
-                print(f"✓ Extracted text using result.data: {response_text[:100]}")
-                logger.debug(f"Extracted text using result.data: {response_text[:100]}")
+            if hasattr(result, "output"):
+                response_text = str(result.output)
+                print(f"✓ Extracted text using result.output: {response_text[:100]}")
+                logger.debug(f"Extracted text using result.output: {response_text[:100]}")
             else:
-                print(f"✗ No 'data' attribute")
+                print(f"✗ No 'output' attribute")
         except Exception as e:
-            print(f"✗ Error extracting from result.data: {e}")
-            logger.debug(f"Could not extract from result.data: {e}")
-
-        # Method 2: Try to convert result to string
-        if not response_text:
-            try:
-                response_text = str(result).strip()
-                if response_text and response_text != "":
-                    print(f"✓ Extracted text using str(): {response_text[:100]}")
-                    logger.debug(f"Extracted text using str(): {response_text[:100]}")
-                else:
-                    print(f"✗ str(result) is empty")
-            except Exception as e:
-                print(f"✗ Error converting result to string: {e}")
-                logger.debug(f"Could not convert result to string: {e}")
-
-        # Method 3: Try to parse from all_messages_json
-        if not response_text:
-            try:
-                messages_json = result.all_messages_json().decode("utf-8")
-                # Extract text from the final response message
-                messages = json.loads(messages_json)
-                print(f"✓ Parsed {len(messages)} messages from all_messages_json")
-                logger.debug(f"Parsed {len(messages)} messages from all_messages_json")
-                print(f"  Messages: {json.dumps(messages, indent=2)[:500]}...")
-
-                # Look for the last response message with text content
-                for message in reversed(messages):
-                    if isinstance(message, dict) and message.get("kind") == "response":
-                        parts = message.get("parts", [])
-                        if isinstance(parts, list):
-                            for part in reversed(parts):
-                                if isinstance(part, dict):
-                                    content = part.get("content", "")
-                                    if content and not isinstance(content, dict):
-                                        response_text = content
-                                        print(f"✓ Extracted from messages: {response_text[:100]}")
-                                        logger.debug(
-                                            f"Extracted from messages: {response_text[:100]}"
-                                        )
-                                        break
-                        if response_text:
-                            break
-            except Exception as e:
-                print(f"✗ Error extracting from messages: {e}")
-                logger.debug(f"Could not extract from messages: {e}")
+            print(f"✗ Error extracting from result.output: {e}")
+            logger.debug(f"Could not extract from result.output: {e}")
 
         if not response_text:
             logger.error(f"Failed to extract response text. Result object: {result}")
-            raise ValueError(
-                "No response text found in evaluation agent result"
-            )
+            raise ValueError("No response text found in evaluation agent result")
 
-        # Parse score and explanation
-        score, explanation = parse_evaluation_response(response_text)
+        # Parse score and explanation directly from response text
+        # Use the parsing functions from eval_agent module
+        from src.agents.eval_agent import extract_score, extract_explanation
+
+        try:
+            score = extract_score(response_text)
+            print(f"✓ Extracted score: {score}")
+            logger.debug(f"Extracted score: {score}")
+        except Exception as e:
+            print(f"✗ Error extracting score: {e}")
+            logger.error(f"Failed to extract score: {e}")
+            raise
+
+        try:
+            explanation = extract_explanation(response_text)
+            print(f"✓ Extracted explanation: {explanation[:100]}")
+            logger.debug(f"Extracted explanation: {explanation[:100]}")
+        except Exception as e:
+            print(f"✗ Error extracting explanation: {e}")
+            logger.error(f"Failed to extract explanation: {e}")
+            raise
 
         # Create evaluation result
         evaluation = EvaluationResult(

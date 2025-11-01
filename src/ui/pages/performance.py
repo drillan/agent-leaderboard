@@ -4,6 +4,7 @@ This module provides the performance metrics dashboard page with
 duration and token consumption charts.
 """
 
+import logging
 from typing import cast
 
 from nicegui import ui
@@ -13,6 +14,8 @@ from src.config.models import AppConfig
 from src.database.connection import DatabaseConnection
 from src.database.repositories import TaskRepository
 from src.ui.components.charts import PerformanceCharts, create_performance_charts
+
+logger = logging.getLogger(__name__)
 
 
 class PerformancePage:
@@ -100,8 +103,12 @@ class PerformancePage:
 
     def refresh(self) -> None:
         """Refresh the performance page with latest data."""
+        logger.info("PerformancePage.refresh() called")
         if self.charts:
+            logger.info("Charts exist, calling charts.refresh()")
             self.charts.refresh()
+        else:
+            logger.warning("Charts is None, cannot refresh")
 
 
 def create_performance_page(config: AppConfig, db: DatabaseConnection) -> None:

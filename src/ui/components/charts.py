@@ -4,12 +4,15 @@ This module provides UI components for visualizing performance metrics
 using Plotly charts via NiceGUI's ui.plotly() integration.
 """
 
+import logging
 from typing import Any
 
 import plotly.graph_objects as go  # type: ignore[import-untyped]
 from nicegui import ui
 
 from src.database.repositories import TaskRepository
+
+logger = logging.getLogger(__name__)
 
 
 def create_duration_chart(metrics: list[dict[str, Any]]) -> go.Figure:
@@ -247,18 +250,23 @@ class PerformanceCharts:
 
     def refresh(self) -> None:
         """Refresh the charts with latest data."""
+        logger.info("PerformanceCharts.refresh() called")
         if self.container:
+            logger.info(f"Container exists, clearing and re-rendering for task_id={self.task_id}")
             self.container.clear()
             with self.container:
                 ui.label("Performance Metrics").classes("text-h6")
 
                 # Query metrics
                 metrics = self.repository.get_performance_metrics(self.task_id)
+                logger.info(f"Retrieved {len(metrics)} performance metrics from database")
 
                 if not metrics:
+                    logger.warning("No performance metrics found, showing empty message")
                     ui.label("No performance data available").classes("text-grey-6")
                     return
 
+                logger.info(f"Creating charts for {len(metrics)} metrics")
                 # Recreate charts
                 with ui.row().classes("w-full gap-4"):
                     with ui.column().classes("flex-1"):
@@ -272,6 +280,9 @@ class PerformanceCharts:
                 # Throughput chart (full width)
                 throughput_fig = create_tokens_per_second_chart(metrics)
                 self.throughput_plot = ui.plotly(throughput_fig).classes("w-full")
+                logger.info("Charts created successfully")
+        else:
+            logger.warning("Container is None, cannot refresh")
 
 
 def create_performance_charts(

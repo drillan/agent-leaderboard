@@ -218,6 +218,17 @@ class MainPage:
         """Create the main page UI."""
         ui.label("Multi-Agent Competition System").classes("text-h4 text-center")
 
+        # Available tools description
+        with ui.card().classes("w-full mb-4"):
+            ui.label("Available Tools").classes("text-h6")
+            ui.markdown("""
+Agents can use the following 3 tools:
+
+1. **get_datetime** - Get current date and time (ISO 8601 format)
+2. **check_prime** - Check if a number is prime
+3. **check_palindrome** - Check if text is a palindrome (case-insensitive)
+            """)
+
         # Task input form
         async def handle_submit(prompt: str) -> None:
             await self.execute_task(prompt)

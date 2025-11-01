@@ -37,6 +37,7 @@ class PerformancePage:
         self.charts: PerformanceCharts | None = None
         self.task_selector: ui.select | None = None
         self.current_task_id: int | None = None
+        self.charts_container: ui.card | None = None
 
     def create(self) -> None:
         """Create the performance page UI."""
@@ -54,31 +55,41 @@ class PerformancePage:
 
             if not tasks:
                 ui.label("No tasks available yet").classes("text-grey-6")
-                return
+            else:
+                task_options: dict[str, int | None] = {"All Tasks": None}
+                for task in tasks:
+                    prompt_str = cast(str, task["prompt"])
+                    task_id = cast(int, task["id"])
+                    prompt_preview = prompt_str[:50] + "..." if len(prompt_str) > 50 else prompt_str
+                    task_options[f"Task #{task_id}: {prompt_preview}"] = task_id
 
-            task_options: dict[str, int | None] = {"All Tasks": None}
-            for task in tasks:
-                prompt_str = cast(str, task["prompt"])
-                task_id = cast(int, task["id"])
-                prompt_preview = prompt_str[:50] + "..." if len(prompt_str) > 50 else prompt_str
-                task_options[f"Task #{task_id}: {prompt_preview}"] = task_id
+                def on_task_select(e: ValueChangeEventArguments) -> None:
+                    selected_label = e.value
+                    if selected_label and selected_label in task_options:
+                        self.current_task_id = task_options[selected_label]
+                        if self.charts:
+                            self.charts.update_task(self.current_task_id)
 
-            def on_task_select(e: ValueChangeEventArguments) -> None:
-                selected_label = e.value
-                if selected_label and selected_label in task_options:
-                    self.current_task_id = task_options[selected_label]
-                    if self.charts:
-                        self.charts.update_task(self.current_task_id)
+                self.task_selector = ui.select(
+                    options=list(task_options.keys()),
+                    label="Select Task",
+                    value="All Tasks",
+                    on_change=on_task_select,
+                ).classes("w-full")
 
-            self.task_selector = ui.select(
-                options=list(task_options.keys()),
-                label="Select Task",
-                value="All Tasks",
-                on_change=on_task_select,
-            ).classes("w-full")
-
-        # Performance charts
-        self.charts = create_performance_charts(self.repository, self.current_task_id)
+        # Performance charts container (always create, even if no data yet)
+        with ui.card().classes("w-full") as charts_card:
+            self.charts_container = charts_card
+            if tasks:
+                # Create charts immediately if tasks exist
+                self.charts = create_performance_charts(self.repository, self.current_task_id)
+            else:
+                # Show placeholder message
+                ui.label("Performance Metrics").classes("text-h6")
+                ui.label("No performance data available yet").classes("text-grey-6")
+                ui.label("Execute a task to see performance metrics").classes(
+                    "text-caption text-grey-7"
+                )
 
     def _get_all_tasks(self) -> list[dict[str, object]]:
         """Get all task submissions from database.
@@ -107,11 +118,15 @@ class PerformancePage:
         if self.charts:
             logger.info("Charts exist, calling charts.refresh()")
             self.charts.refresh()
-        else:
-            logger.warning("Charts is None, creating charts for the first time")
+        elif self.charts_container:
+            logger.warning("Charts is None, creating charts for the first time in container")
             # Charts were not created initially (no tasks existed)
-            # Create them now
-            self.charts = create_performance_charts(self.repository, self.current_task_id)
+            # Create them now within the existing container
+            self.charts_container.clear()
+            with self.charts_container:
+                self.charts = create_performance_charts(self.repository, self.current_task_id)
+        else:
+            logger.error("Both charts and charts_container are None, cannot refresh")
 
 
 def create_performance_page(config: AppConfig, db: DatabaseConnection) -> None:

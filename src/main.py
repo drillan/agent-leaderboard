@@ -155,19 +155,37 @@ def main() -> None:
             history_tab = ui.tab("History", icon="history")
             settings_tab = ui.tab("Settings", icon="settings")
 
+        # Store page instances for refresh
+        from src.ui.pages.history import HistoryPage
+        from src.ui.pages.performance import PerformancePage
+
+        perf_page = None
+        history_page = None
+
         # Create tab panels
         with ui.tab_panels(tabs, value=main_tab).classes("w-full"):
             with ui.tab_panel(main_tab):
                 create_main_page(config, db)
 
             with ui.tab_panel(perf_tab):
-                create_performance_page(config, db)
+                perf_page = PerformancePage(config, db)
+                perf_page.create()
 
             with ui.tab_panel(history_tab):
-                create_history_page(config, db)
+                history_page = HistoryPage(config, db)
+                history_page.create()
 
             with ui.tab_panel(settings_tab):
                 create_settings_page(config, args.config, db)
+
+        # Refresh data when switching to Performance or History tabs
+        def on_tab_change(e):  # type: ignore[no-untyped-def]
+            if e.value == perf_tab and perf_page:
+                perf_page.refresh()
+            elif e.value == history_tab and history_page:
+                history_page.refresh()
+
+        tabs.on("update:model-value", on_tab_change)
 
     # Run application
     print("\n🚀 Starting Multi-Agent Competition System")

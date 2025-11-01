@@ -241,13 +241,13 @@ Agents can use the following 3 tools:
         # Leaderboard
         self.leaderboard = create_leaderboard_table(self.repository, self.current_task_id)
 
-        # Tool call tree panel
-        self.tool_tree_panel = create_tool_call_tree_panel(self.current_executions)
-
-        # Agent responses panel
+        # Agent responses panel (show first)
         self.agent_responses_panel = create_agent_responses_panel(
             self.current_executions, self.execution_scores
         )
+
+        # Tool call tree panel (show after agent responses)
+        self.tool_tree_panel = create_tool_call_tree_panel(self.current_executions)
 
 
 def create_main_page(config: AppConfig, db: DatabaseConnection) -> None:

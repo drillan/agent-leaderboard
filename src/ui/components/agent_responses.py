@@ -136,7 +136,20 @@ class AgentResponsesPanel:
             self.container.clear()
             with self.container:
                 ui.label("Agent Responses").classes("text-h6")
-                self.create()
+
+                if not self.executions:
+                    ui.label("No executions available").classes("text-grey-6")
+                    return
+
+                # Create response cards for each execution
+                for execution in self.executions:
+                    score = None
+                    if execution.id:
+                        score = self.scores.get(execution.id)
+
+                    response_card = AgentResponseCard(execution, score)
+                    response_card.create()
+                    self.response_cards.append(response_card)
 
     def refresh(self) -> None:
         """Refresh the panel display with latest data."""
@@ -144,7 +157,20 @@ class AgentResponsesPanel:
             self.container.clear()
             with self.container:
                 ui.label("Agent Responses").classes("text-h6")
-                self.create()
+
+                if not self.executions:
+                    ui.label("No executions available").classes("text-grey-6")
+                    return
+
+                # Create response cards for each execution
+                for execution in self.executions:
+                    score = None
+                    if execution.id:
+                        score = self.scores.get(execution.id)
+
+                    response_card = AgentResponseCard(execution, score)
+                    response_card.create()
+                    self.response_cards.append(response_card)
 
 
 def create_agent_responses_panel(

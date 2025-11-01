@@ -11,9 +11,7 @@ from nicegui import ui
 logger = logging.getLogger(__name__)
 
 
-def create_task_input_form(
-    on_submit: Callable[[str], None | Awaitable[None]]
-) -> None:
+def create_task_input_form(on_submit: Callable[[str], None | Awaitable[None]]) -> None:
     """Create a task input form with textarea and submit button.
 
     Args:

@@ -3,6 +3,7 @@
 This module provides the main UI page for task submission and execution.
 """
 
+import contextlib
 import logging
 
 from nicegui import ui
@@ -68,10 +69,8 @@ class MainPage:
 
         if self.is_executing:
             logger.warning("Execution already in progress, skipping")
-            try:
+            with contextlib.suppress(Exception):
                 ui.notify("An execution is already in progress", type="warning")
-            except Exception:
-                pass
             return
 
         self.is_executing = True
@@ -82,10 +81,8 @@ class MainPage:
             task = TaskSubmission(prompt=prompt)
             task_id = self.repository.create_task(task)
 
-            try:
+            with contextlib.suppress(Exception):
                 ui.notify(f"Task submitted (ID: {task_id})", type="positive")
-            except Exception:
-                pass
 
             # Create execution state tracker
             self.current_execution_state = MultiAgentExecutionState(task_id=task_id)
@@ -128,19 +125,15 @@ class MainPage:
             failed = self.current_execution_state.get_failed_count()
             total = len(self.config.task_agents)
 
-            try:
+            with contextlib.suppress(Exception):
                 ui.notify(
                     f"Execution complete: {completed}/{total} succeeded, {failed}/{total} failed",
                     type="positive" if completed > 0 else "warning",
                 )
-            except Exception:
-                pass
 
             # Run evaluations
-            try:
+            with contextlib.suppress(Exception):
                 ui.notify("Running evaluations...", type="info")
-            except Exception:
-                pass
 
             evaluation_agent = create_evaluation_agent(self.config.evaluation_agent)
             self.execution_scores = {}  # Reset scores for this task
@@ -165,27 +158,21 @@ class MainPage:
                             self.execution_scores[execution.id] = evaluation.score
                     else:
                         model_id = f"{execution.model_provider}/{execution.model_name}"
-                        try:
+                        with contextlib.suppress(Exception):
                             ui.notify(
                                 f"No agent response found for {model_id}",
                                 type="warning",
                             )
-                        except Exception:
-                            pass
                 except Exception as e:
                     model_id = f"{execution.model_provider}/{execution.model_name}"
-                    try:
+                    with contextlib.suppress(Exception):
                         ui.notify(
                             f"Evaluation failed for {model_id}: {e}",
                             type="warning",
                         )
-                    except Exception:
-                        pass
 
-            try:
+            with contextlib.suppress(Exception):
                 ui.notify("Evaluations complete!", type="positive")
-            except Exception:
-                pass
 
             # Store current task and executions
             self.current_task_id = task_id

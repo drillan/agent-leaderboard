@@ -50,8 +50,28 @@ class TestModelConfig:
         """Test that invalid provider is rejected."""
         os.environ["TEST_KEY"] = "test"
         with pytest.raises(ValueError):
-            ModelConfig(provider="invalid", model="gpt-4o", api_key_env="TEST_KEY")
+            ModelConfig(provider="invalid", model="gpt-4o", api_key_env="TEST_KEY")  # type: ignore[arg-type]
         del os.environ["TEST_KEY"]
+
+    def test_groq_provider(self) -> None:
+        """Test Groq provider is accepted."""
+        os.environ["GROQ_KEY"] = "test-groq-key"
+        config = ModelConfig(
+            provider="groq", model="llama-3.3-70b-versatile", api_key_env="GROQ_KEY"
+        )
+        assert config.provider == "groq"
+        assert config.model == "llama-3.3-70b-versatile"
+        del os.environ["GROQ_KEY"]
+
+    def test_huggingface_provider(self) -> None:
+        """Test Hugging Face provider is accepted."""
+        os.environ["HF_TOKEN"] = "test-hf-token"
+        config = ModelConfig(
+            provider="huggingface", model="Qwen/Qwen3-235B-A22B", api_key_env="HF_TOKEN"
+        )
+        assert config.provider == "huggingface"
+        assert config.model == "Qwen/Qwen3-235B-A22B"
+        del os.environ["HF_TOKEN"]
 
 
 class TestExecutionConfig:

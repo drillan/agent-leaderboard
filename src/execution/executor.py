@@ -391,9 +391,26 @@ def format_tool_call(node: ToolCallNode, max_result_length: int = 100) -> str:
     Returns:
         Formatted string like "tool_name(arg=value) → result"
     """
-    # Format arguments
-    args_parts = [f"{k}={v!r}" for k, v in node["args"].items()]
-    args_str = ", ".join(args_parts)
+    # Format arguments - handle both dict and JSON string
+    args = node["args"]
+
+    # If args is a string, try to parse it as JSON
+    if isinstance(args, str):
+        try:
+            parsed_args = json.loads(args)
+            if isinstance(parsed_args, dict):
+                args = parsed_args
+        except (json.JSONDecodeError, TypeError):
+            # If parsing fails, keep as string
+            pass
+
+    # Format based on the final type
+    if isinstance(args, dict):
+        args_parts = [f"{k}={v!r}" for k, v in args.items()]
+        args_str = ", ".join(args_parts)
+    else:
+        # For strings or any other type
+        args_str = str(args)
 
     # Format result
     result_str = str(node["result"])

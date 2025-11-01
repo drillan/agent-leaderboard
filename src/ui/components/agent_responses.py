@@ -45,9 +45,7 @@ class AgentResponseCard:
             # Score if available
             if self.score is not None:
                 score_color = (
-                    "green"
-                    if self.score >= 80
-                    else "orange" if self.score >= 60 else "red"
+                    "green" if self.score >= 80 else "orange" if self.score >= 60 else "red"
                 )
                 with ui.row().classes("w-full"):
                     ui.label("Score: ").classes("font-bold")
@@ -66,20 +64,20 @@ class AgentResponseCard:
                 ui.label("No response available").classes("text-grey-6")
 
             # Execution details
-            with ui.expansion("Details").classes("w-full"):
-                with ui.column().classes("w-full gap-2"):
-                    if self.execution.duration_seconds is not None:
-                        ui.label(
-                            f"Duration: {self.execution.duration_seconds:.2f}s"
-                        ).classes("text-caption")
-                    if self.execution.token_count is not None:
-                        ui.label(
-                            f"Tokens: {self.execution.token_count}"
-                        ).classes("text-caption")
-                    if self.execution.completed_at:
-                        ui.label(
-                            f"Completed: {self.execution.completed_at.isoformat()}"
-                        ).classes("text-caption")
+            with (
+                ui.expansion("Details").classes("w-full"),
+                ui.column().classes("w-full gap-2"),
+            ):
+                if self.execution.duration_seconds is not None:
+                    ui.label(f"Duration: {self.execution.duration_seconds:.2f}s").classes(
+                        "text-caption"
+                    )
+                if self.execution.token_count is not None:
+                    ui.label(f"Tokens: {self.execution.token_count}").classes("text-caption")
+                if self.execution.completed_at:
+                    ui.label(f"Completed: {self.execution.completed_at.isoformat()}").classes(
+                        "text-caption"
+                    )
 
 
 class AgentResponsesPanel:

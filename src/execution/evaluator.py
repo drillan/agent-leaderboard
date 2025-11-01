@@ -10,7 +10,6 @@ from typing import Any
 
 from pydantic_ai import Agent
 
-from src.agents.eval_agent import parse_evaluation_response
 from src.execution.timeout import with_timeout
 from src.models.evaluation import EvaluationResult
 from src.models.execution import AgentExecution
@@ -42,7 +41,7 @@ async def evaluate_execution(
         TimeoutError: If evaluation exceeds timeout_seconds
         Exception: If evaluation agent execution fails
     """
-    print(f"\n=== STARTING EVALUATION ===")
+    print("\n=== STARTING EVALUATION ===")
     print(f"Execution ID: {execution.id}")
     print(f"Task prompt: {task_prompt[:100]}")
     print(f"Agent response length: {len(agent_response)}")
@@ -64,19 +63,15 @@ Explanation: [your explanation]
 
     try:
         # Run evaluation agent with timeout
-        result: Any = await with_timeout(
-            eval_agent.run(evaluation_prompt), timeout_seconds
-        )
+        result: Any = await with_timeout(eval_agent.run(evaluation_prompt), timeout_seconds)
 
         if result is None:
-            raise TimeoutError(
-                f"Evaluation timed out after {timeout_seconds} seconds"
-            )
+            raise TimeoutError(f"Evaluation timed out after {timeout_seconds} seconds")
 
         # Extract response text from Pydantic AI result
         response_text = ""
 
-        print(f"\n=== EVALUATION RESULT DEBUG ===")
+        print("\n=== EVALUATION RESULT DEBUG ===")
         print(f"Result type: {type(result)}")
         print(f"Result: {result}")
 
@@ -87,7 +82,7 @@ Explanation: [your explanation]
                 print(f"✓ Extracted text using result.output: {response_text[:100]}")
                 logger.debug(f"Extracted text using result.output: {response_text[:100]}")
             else:
-                print(f"✗ No 'output' attribute")
+                print("✗ No 'output' attribute")
         except Exception as e:
             print(f"✗ Error extracting from result.output: {e}")
             logger.debug(f"Could not extract from result.output: {e}")
@@ -98,7 +93,7 @@ Explanation: [your explanation]
 
         # Parse score and explanation directly from response text
         # Use the parsing functions from eval_agent module
-        from src.agents.eval_agent import extract_score, extract_explanation
+        from src.agents.eval_agent import extract_explanation, extract_score
 
         try:
             score = extract_score(response_text)
@@ -136,9 +131,7 @@ Explanation: [your explanation]
         logger.error(f"Evaluation timed out for execution {execution.id}: {e}")
         raise
     except ValueError as e:
-        logger.error(
-            f"Failed to parse evaluation response for execution {execution.id}: {e}"
-        )
+        logger.error(f"Failed to parse evaluation response for execution {execution.id}: {e}")
         raise
     except Exception as e:
         logger.error(

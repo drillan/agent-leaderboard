@@ -16,7 +16,7 @@ A comprehensive system for executing tasks across multiple AI models, evaluating
 
 ## Features
 
-- **Multi-Model Execution**: Run the same task across multiple AI models in parallel (OpenAI, Anthropic, Google Gemini)
+- **Multi-Model Execution**: Run the same task across multiple AI models in parallel (OpenAI, Anthropic, Google Gemini, Groq, Hugging Face)
 - **Automated Evaluation**: AI-powered evaluation agent scores each execution on a 0-100 scale
 - **Interactive Leaderboard**: Real-time leaderboard with rankings, scores, and performance metrics
 - **Performance Analytics**: Visualize execution duration, token consumption, and throughput metrics
@@ -31,7 +31,7 @@ A comprehensive system for executing tasks across multiple AI models, evaluating
 
 - Python 3.13 or higher
 - `uv` package manager ([installation guide](https://github.com/astral-sh/uv))
-- API keys for at least 2 AI providers (OpenAI, Anthropic, or Google)
+- API keys for at least 2 AI providers (OpenAI, Anthropic, Google, Groq, or Hugging Face)
 
 ### Installation
 
@@ -60,6 +60,12 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Google (optional)
 export GOOGLE_API_KEY="..."
+
+# Groq (optional, free tier available)
+export GROQ_API_KEY="gsk-..."
+
+# Hugging Face (optional, free tier available)
+export HF_TOKEN="hf_..."
 ```
 
 2. **Create `config.toml`** in the project root:
@@ -77,6 +83,17 @@ api_key_env = "OPENAI_API_KEY"
 provider = "anthropic"
 model = "claude-sonnet-4"
 api_key_env = "ANTHROPIC_API_KEY"
+
+# Free tier examples (optional)
+[[task_agents.models]]
+provider = "groq"
+model = "llama-3.3-70b-versatile"
+api_key_env = "GROQ_API_KEY"
+
+[[task_agents.models]]
+provider = "huggingface"
+model = "meta-llama/Llama-3.3-70B-Instruct"
+api_key_env = "HF_TOKEN"
 
 [evaluation_agent]
 provider = "openai"
@@ -205,7 +222,7 @@ specs/001-agent-leaderboard/
 
 - **Runtime**: Python 3.13+
 - **Package Manager**: uv
-- **AI Framework**: Pydantic AI (with OpenAI, Anthropic, Google providers)
+- **AI Framework**: Pydantic AI (with OpenAI, Anthropic, Google, Groq, Hugging Face providers)
 - **Web UI**: NiceGUI
 - **Database**: DuckDB
 - **Visualization**: Plotly

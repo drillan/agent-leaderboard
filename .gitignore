@@ -220,3 +220,6 @@ __marimo__/
 *.duckdb
 *.duckdb.wal
 agent_leaderboard.duckdb*
+/plans
+/debug
+/logs

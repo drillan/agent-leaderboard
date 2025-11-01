@@ -13,9 +13,7 @@ from nicegui import ui
 
 from src.config.loader import ConfigLoader
 from src.database.connection import DatabaseConnection
-from src.ui.pages.history import create_history_page
 from src.ui.pages.main import create_main_page
-from src.ui.pages.performance import create_performance_page
 from src.ui.pages.settings import create_settings_page
 
 # Configure logging - both console and file

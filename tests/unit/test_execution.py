@@ -4,6 +4,7 @@ Tests for tool hierarchy extraction and execution helpers.
 """
 
 import json
+
 from src.execution.executor import extract_tool_hierarchy
 from src.models.execution import AgentExecution
 
@@ -15,7 +16,10 @@ class TestToolHierarchyExtraction:
         """Test extracting a single tool call from Pydantic AI v1.9.0 message format."""
         # Pydantic AI v1.9.0 message format with kind/part_kind structure
         messages = [
-            {"kind": "request", "parts": [{"part_kind": "user-prompt", "content": "Check if 17 is prime"}]},
+            {
+                "kind": "request",
+                "parts": [{"part_kind": "user-prompt", "content": "Check if 17 is prime"}],
+            },
             {
                 "kind": "response",
                 "parts": [
@@ -77,7 +81,12 @@ class TestToolHierarchyExtraction:
     def test_extract_multiple_sequential_tool_calls(self) -> None:
         """Test extracting multiple sequential (non-nested) tool calls in Pydantic AI format."""
         messages = [
-            {"kind": "request", "parts": [{"part_kind": "user-prompt", "content": "Check if 17 is prime and get datetime"}]},
+            {
+                "kind": "request",
+                "parts": [
+                    {"part_kind": "user-prompt", "content": "Check if 17 is prime and get datetime"}
+                ],
+            },
             {
                 "kind": "response",
                 "parts": [

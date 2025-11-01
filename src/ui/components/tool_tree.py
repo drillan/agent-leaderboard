@@ -178,7 +178,9 @@ class ToolCallTreePanel:
 
         # Set the default selection if we have a pre-selected execution
         if self.selected_execution:
-            default_label = f"{self.selected_execution.model_provider}/{self.selected_execution.model_name}"
+            default_label = (
+                f"{self.selected_execution.model_provider}/{self.selected_execution.model_name}"
+            )
             select_widget.value = default_label
 
         # Create tree component

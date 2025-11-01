@@ -502,9 +502,7 @@ class TestLeaderboardView:
 class TestEvaluationWorkflow:
     """Tests for complete evaluation workflow integration."""
 
-    def test_evaluation_workflow_end_to_end(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluation_workflow_end_to_end(self, temp_db: DatabaseConnection) -> None:
         """Test complete workflow: execute → evaluate → store → display.
 
         This test verifies the integration of:
@@ -571,9 +569,7 @@ Explanation: Correct mathematical calculation with clear reasoning."""
         assert leaderboard[0]["score"] == 95
         assert leaderboard[0]["evaluation_text"] == explanation
 
-    def test_evaluation_workflow_multiple_agents(
-        self, temp_db: DatabaseConnection
-    ) -> None:
+    def test_evaluation_workflow_multiple_agents(self, temp_db: DatabaseConnection) -> None:
         """Test evaluation workflow with multiple agent executions.
 
         Verifies that:
@@ -609,7 +605,7 @@ Explanation: Correct mathematical calculation with clear reasoning."""
             )
             execution.mark_completed()
             execution.duration_seconds = duration
-            execution.all_messages_json = f'{{"response": "5 + 3 = 8"}}'
+            execution.all_messages_json = '{"response": "5 + 3 = 8"}'
             exec_id = repo.create_execution(execution)
             execution_ids.append((exec_id, expected_score, duration))
 
@@ -756,8 +752,8 @@ class TestCascadeDelete:
 
 @pytest.mark.integration
 @pytest.mark.skip(reason="Requires Phase 4 implementation (T044-T045)")
-class TestEvaluationWorkflow:
-    """Tests for complete evaluation workflow.
+class TestEvaluationWorkflowSkipped:
+    """Tests for complete evaluation workflow (skipped - duplicate).
 
     These tests will be enabled after implementing:
     - T044: Evaluation agent factory

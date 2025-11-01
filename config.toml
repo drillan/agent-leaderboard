@@ -8,20 +8,20 @@ path = "agent_leaderboard.duckdb"
 timeout_seconds = 60
 
 [[task_agents]]
-provider = "gemini"
-model = "gemini-2.0-flash-lite"
-api_key_env = "GOOGLE_API_KEY"
+provider = "groq"
+model = "llama-3.3-70b-versatile"
+api_key_env = "GROQ_API_KEY"
 
 [[task_agents]]
-provider = "gemini"
-model = "gemini-2.0-flash"
-api_key_env = "GOOGLE_API_KEY"
+provider = "groq"
+model = "qwen/qwen3-32b"
+api_key_env = "GROQ_API_KEY"
 
 [evaluation_agent]
-# Note: "gemini" is automatically mapped to "google-gla:" provider internally
-provider = "gemini"
-model = "gemini-2.5-pro"
-api_key_env = "GOOGLE_API_KEY"
+# Groq provides fast and free evaluation
+provider = "groq"
+model = "groq/compound-mini"
+api_key_env = "GROQ_API_KEY"
 prompt = """You are evaluating the performance of an AI agent that completed a task.
 
 Task: {task_prompt}

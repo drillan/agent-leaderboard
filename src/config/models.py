@@ -14,12 +14,12 @@ class ModelConfig(BaseModel):
     """Configuration for a single AI model (task agent or evaluation agent).
 
     Attributes:
-        provider: AI provider name (openai, anthropic, or gemini)
+        provider: AI provider name (openai, anthropic, gemini, groq, or huggingface)
         model: Model identifier (e.g., "gpt-4o", "claude-sonnet-4")
         api_key_env: Environment variable name containing the API key
     """
 
-    provider: Literal["openai", "anthropic", "gemini"]
+    provider: Literal["openai", "anthropic", "gemini", "groq", "huggingface"]
     model: str = Field(min_length=1)
     api_key_env: str = Field(min_length=1)
 
@@ -58,13 +58,13 @@ class EvaluationConfig(BaseModel):
     """Configuration for the evaluation agent.
 
     Attributes:
-        provider: AI provider name
+        provider: AI provider name (openai, anthropic, gemini, groq, or huggingface)
         model: Model identifier
         api_key_env: Environment variable name containing the API key
         prompt: Evaluation prompt template with {task_prompt} and {agent_response} placeholders
     """
 
-    provider: Literal["openai", "anthropic", "gemini"]
+    provider: Literal["openai", "anthropic", "gemini", "groq", "huggingface"]
     model: str = Field(min_length=1)
     api_key_env: str = Field(min_length=1)
     prompt: str = Field(min_length=1)
@@ -142,10 +142,11 @@ def get_pydantic_ai_provider(provider: str) -> str:
     provider strings required by Pydantic AI for model inference.
 
     Args:
-        provider: User-friendly provider name (openai, anthropic, or gemini)
+        provider: User-friendly provider name (openai, anthropic, gemini, groq, or huggingface)
 
     Returns:
-        Pydantic AI provider string (e.g., 'openai', 'anthropic', 'google-gla:')
+        Pydantic AI provider string (e.g., 'openai', 'anthropic', 'google-gla:', 'groq:',
+        'huggingface:')
 
     Raises:
         ValueError: If provider is not recognized
@@ -155,11 +156,17 @@ def get_pydantic_ai_provider(provider: str) -> str:
         'google-gla:'
         >>> get_pydantic_ai_provider("openai")
         'openai'
+        >>> get_pydantic_ai_provider("groq")
+        'groq:'
+        >>> get_pydantic_ai_provider("huggingface")
+        'huggingface:'
     """
     mapping: dict[str, str] = {
         "openai": "openai",
         "anthropic": "anthropic",
         "gemini": "google-gla:",  # Google AI Studio (Generative Language API)
+        "groq": "groq:",  # Groq API
+        "huggingface": "huggingface:",  # Hugging Face Inference Providers
     }
     if provider not in mapping:
         raise ValueError(

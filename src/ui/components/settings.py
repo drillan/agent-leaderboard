@@ -42,7 +42,7 @@ class ModelConfigForm:
             with ui.row().classes("w-full items-center gap-4"):
                 # Provider selection
                 self.provider_select = ui.select(
-                    options=["openai", "anthropic", "gemini"],
+                    options=["openai", "anthropic", "gemini", "groq", "huggingface"],
                     label="Provider",
                     value=self.model_config.provider if self.model_config else "openai",
                 ).classes("w-1/4")
@@ -50,7 +50,7 @@ class ModelConfigForm:
                 # Model name
                 self.model_input = ui.input(
                     label="Model Name",
-                    placeholder="e.g., gpt-4o, claude-sonnet-4",
+                    placeholder="e.g., gpt-4o, llama-3.3-70b-versatile",
                     value=self.model_config.model if self.model_config else "",
                 ).classes("w-1/3")
 

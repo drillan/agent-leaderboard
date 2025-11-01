@@ -321,49 +321,68 @@ class TaskRepository:
         return leaderboard
 
     def get_performance_metrics(self, task_id: int | None = None) -> list[dict[str, object]]:
-        """Get performance metrics for agent executions.
+        """Get aggregated performance metrics for agent executions grouped by model.
 
         Args:
             task_id: Optional task ID to filter by. If None, returns metrics for all tasks.
 
         Returns:
-            List of dictionaries with performance metrics data
+            List of dictionaries with aggregated performance metrics per model:
+            - model_provider: Provider name
+            - model_name: Model name
+            - avg_duration: Average execution duration in seconds
+            - std_duration: Standard deviation of duration (0 if n=1)
+            - min_duration: Minimum duration
+            - max_duration: Maximum duration
+            - avg_tokens: Average token count
+            - std_tokens: Standard deviation of token count (0 if n=1)
+            - execution_count: Number of executions for this model
         """
         conn = self.db.connect()
 
         if task_id is not None:
-            # Query metrics for specific task
+            # Query aggregated metrics for specific task
             results = conn.execute(
                 """
                 SELECT
-                    id,
-                    duration_seconds,
-                    token_count,
                     model_provider,
-                    model_name
+                    model_name,
+                    AVG(duration_seconds) as avg_duration,
+                    COALESCE(STDDEV_SAMP(duration_seconds), 0) as std_duration,
+                    MIN(duration_seconds) as min_duration,
+                    MAX(duration_seconds) as max_duration,
+                    AVG(COALESCE(token_count, 0)) as avg_tokens,
+                    COALESCE(STDDEV_SAMP(COALESCE(token_count, 0)), 0) as std_tokens,
+                    COUNT(*) as execution_count
                 FROM agent_executions
                 WHERE task_id = ?
                   AND status IN ('completed', 'timeout')
                   AND duration_seconds IS NOT NULL
                   AND duration_seconds > 0
+                GROUP BY model_provider, model_name
                 ORDER BY model_provider, model_name
                 """,
                 [task_id],
             ).fetchall()
         else:
-            # Query metrics for all tasks
+            # Query aggregated metrics for all tasks
             results = conn.execute(
                 """
                 SELECT
-                    id,
-                    duration_seconds,
-                    token_count,
                     model_provider,
-                    model_name
+                    model_name,
+                    AVG(duration_seconds) as avg_duration,
+                    COALESCE(STDDEV_SAMP(duration_seconds), 0) as std_duration,
+                    MIN(duration_seconds) as min_duration,
+                    MAX(duration_seconds) as max_duration,
+                    AVG(COALESCE(token_count, 0)) as avg_tokens,
+                    COALESCE(STDDEV_SAMP(COALESCE(token_count, 0)), 0) as std_tokens,
+                    COUNT(*) as execution_count
                 FROM agent_executions
                 WHERE status IN ('completed', 'timeout')
                   AND duration_seconds IS NOT NULL
                   AND duration_seconds > 0
+                GROUP BY model_provider, model_name
                 ORDER BY model_provider, model_name
                 """
             ).fetchall()
@@ -372,11 +391,15 @@ class TaskRepository:
         for row in results:
             metrics.append(
                 {
-                    "execution_id": row[0],
-                    "duration_seconds": row[1],
-                    "token_count": row[2],
-                    "model_provider": row[3],
-                    "model_name": row[4],
+                    "model_provider": row[0],
+                    "model_name": row[1],
+                    "avg_duration": row[2],
+                    "std_duration": row[3],
+                    "min_duration": row[4],
+                    "max_duration": row[5],
+                    "avg_tokens": row[6],
+                    "std_tokens": row[7],
+                    "execution_count": row[8],
                 }
             )
 

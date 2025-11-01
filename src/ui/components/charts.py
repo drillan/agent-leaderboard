@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 def create_duration_chart(metrics: list[dict[str, Any]]) -> go.Figure:
-    """Create a bar chart for execution durations.
+    """Create a bar chart for execution durations with error bars.
 
     Args:
-        metrics: List of performance metrics dictionaries
+        metrics: List of aggregated performance metrics dictionaries
 
     Returns:
-        Plotly Figure with duration bar chart
+        Plotly Figure with duration bar chart and error bars
     """
     if not metrics:
         # Return empty chart with message
@@ -37,7 +37,7 @@ def create_duration_chart(metrics: list[dict[str, Any]]) -> go.Figure:
             font={"size": 20, "color": "gray"},
         )
         fig.update_layout(
-            title="Execution Duration by Model",
+            title="Execution Duration by Model (Average ± Std Dev)",
             xaxis={"visible": False},
             yaxis={"visible": False},
         )
@@ -45,23 +45,38 @@ def create_duration_chart(metrics: list[dict[str, Any]]) -> go.Figure:
 
     # Extract data
     models = [f"{m['model_provider']}/{m['model_name']}" for m in metrics]
-    durations = [float(m["duration_seconds"]) for m in metrics]
+    avg_durations = [float(m["avg_duration"]) for m in metrics]
+    std_durations = [float(m["std_duration"]) for m in metrics]
+    counts = [int(m["execution_count"]) for m in metrics]
 
-    # Create bar chart
+    # Create hover text with detailed statistics
+    hover_texts = [
+        f"Average: {avg:.2f}s<br>"
+        f"Std Dev: {std:.2f}s<br>"
+        f"Min: {m['min_duration']:.2f}s<br>"
+        f"Max: {m['max_duration']:.2f}s<br>"
+        f"Executions: {count}"
+        for avg, std, count, m in zip(avg_durations, std_durations, counts, metrics, strict=True)
+    ]
+
+    # Create bar chart with error bars
     fig = go.Figure(
         data=[
             go.Bar(
                 x=models,
-                y=durations,
+                y=avg_durations,
+                error_y={"type": "data", "array": std_durations, "visible": True},
                 marker={"color": "skyblue"},
-                text=[f"{d:.2f}s" for d in durations],
+                text=[f"{d:.2f}s (n={c})" for d, c in zip(avg_durations, counts, strict=True)],
                 textposition="outside",
+                hovertext=hover_texts,
+                hoverinfo="text",
             )
         ]
     )
 
     fig.update_layout(
-        title="Execution Duration by Model",
+        title="Execution Duration by Model (Average ± Std Dev)",
         xaxis_title="Model",
         yaxis_title="Duration (seconds)",
         hovermode="x unified",
@@ -72,13 +87,13 @@ def create_duration_chart(metrics: list[dict[str, Any]]) -> go.Figure:
 
 
 def create_token_chart(metrics: list[dict[str, Any]]) -> go.Figure:
-    """Create a bar chart for token consumption.
+    """Create a bar chart for token consumption with error bars.
 
     Args:
-        metrics: List of performance metrics dictionaries
+        metrics: List of aggregated performance metrics dictionaries
 
     Returns:
-        Plotly Figure with token bar chart
+        Plotly Figure with token bar chart and error bars
     """
     if not metrics:
         # Return empty chart with message
@@ -93,7 +108,7 @@ def create_token_chart(metrics: list[dict[str, Any]]) -> go.Figure:
             font={"size": 20, "color": "gray"},
         )
         fig.update_layout(
-            title="Token Consumption by Model",
+            title="Token Consumption by Model (Average ± Std Dev)",
             xaxis={"visible": False},
             yaxis={"visible": False},
         )
@@ -101,25 +116,36 @@ def create_token_chart(metrics: list[dict[str, Any]]) -> go.Figure:
 
     # Extract data
     models = [f"{m['model_provider']}/{m['model_name']}" for m in metrics]
-    tokens = [int(m["token_count"]) if m["token_count"] is not None else 0 for m in metrics]
+    avg_tokens = [float(m["avg_tokens"]) for m in metrics]
+    std_tokens = [float(m["std_tokens"]) for m in metrics]
+    counts = [int(m["execution_count"]) for m in metrics]
 
-    # Create bar chart
+    # Create hover text with detailed statistics
+    hover_texts = [
+        f"Average: {avg:.0f} tokens<br>Std Dev: {std:.0f}<br>Executions: {count}"
+        for avg, std, count in zip(avg_tokens, std_tokens, counts, strict=True)
+    ]
+
+    # Create bar chart with error bars
     fig = go.Figure(
         data=[
             go.Bar(
                 x=models,
-                y=tokens,
+                y=avg_tokens,
+                error_y={"type": "data", "array": std_tokens, "visible": True},
                 marker={"color": "lightgreen"},
-                text=tokens,
+                text=[f"{int(t)} (n={c})" for t, c in zip(avg_tokens, counts, strict=True)],
                 textposition="outside",
+                hovertext=hover_texts,
+                hoverinfo="text",
             )
         ]
     )
 
     fig.update_layout(
-        title="Token Consumption by Model",
+        title="Token Consumption by Model (Average ± Std Dev)",
         xaxis_title="Model",
-        yaxis_title="Total Tokens",
+        yaxis_title="Tokens",
         hovermode="x unified",
         showlegend=False,
     )
@@ -131,7 +157,7 @@ def create_tokens_per_second_chart(metrics: list[dict[str, Any]]) -> go.Figure:
     """Create a bar chart for tokens per second (throughput).
 
     Args:
-        metrics: List of performance metrics dictionaries
+        metrics: List of aggregated performance metrics dictionaries
 
     Returns:
         Plotly Figure with tokens/sec bar chart
@@ -149,36 +175,49 @@ def create_tokens_per_second_chart(metrics: list[dict[str, Any]]) -> go.Figure:
             font={"size": 20, "color": "gray"},
         )
         fig.update_layout(
-            title="Throughput by Model",
+            title="Throughput by Model (Average)",
             xaxis={"visible": False},
             yaxis={"visible": False},
         )
         return fig
 
-    # Extract data and calculate tokens per second
+    # Extract data and calculate average tokens per second
     models = [f"{m['model_provider']}/{m['model_name']}" for m in metrics]
-    throughput = []
+    avg_throughput = []
+    counts = [int(m["execution_count"]) for m in metrics]
+
     for m in metrics:
-        duration = float(m["duration_seconds"])
-        tokens = int(m["token_count"]) if m["token_count"] is not None else 0
-        tokens_per_sec = tokens / duration if duration > 0 else 0
-        throughput.append(tokens_per_sec)
+        avg_duration = float(m["avg_duration"])
+        avg_tokens = float(m["avg_tokens"])
+        tokens_per_sec = avg_tokens / avg_duration if avg_duration > 0 else 0
+        avg_throughput.append(tokens_per_sec)
+
+    # Create hover text with detailed statistics
+    hover_texts = [
+        f"Throughput: {tps:.1f} tokens/s<br>"
+        f"Avg Duration: {m['avg_duration']:.2f}s<br>"
+        f"Avg Tokens: {m['avg_tokens']:.0f}<br>"
+        f"Executions: {count}"
+        for tps, count, m in zip(avg_throughput, counts, metrics, strict=True)
+    ]
 
     # Create bar chart
     fig = go.Figure(
         data=[
             go.Bar(
                 x=models,
-                y=throughput,
+                y=avg_throughput,
                 marker={"color": "coral"},
-                text=[f"{t:.1f}" for t in throughput],
+                text=[f"{t:.1f} (n={c})" for t, c in zip(avg_throughput, counts, strict=True)],
                 textposition="outside",
+                hovertext=hover_texts,
+                hoverinfo="text",
             )
         ]
     )
 
     fig.update_layout(
-        title="Throughput by Model (Tokens/Second)",
+        title="Throughput by Model (Average Tokens/Second)",
         xaxis_title="Model",
         yaxis_title="Tokens per Second",
         hovermode="x unified",

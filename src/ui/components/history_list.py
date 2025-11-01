@@ -4,6 +4,7 @@ This module provides a UI component for displaying past task execution history.
 Shows task prompts, timestamps, execution counts, and scores.
 """
 
+import logging
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any, cast
@@ -11,6 +12,8 @@ from typing import Any, cast
 from nicegui import ui
 
 from src.database.repositories import TaskRepository
+
+logger = logging.getLogger(__name__)
 
 
 def format_timestamp(timestamp: str | datetime | Any) -> str:
@@ -83,8 +86,10 @@ class HistoryList:
         """Render history table."""
         # Query history data
         history_entries = self.repository.get_task_history()
+        logger.info(f"_render_history: Rendering {len(history_entries)} history entries")
 
         if not history_entries:
+            logger.info("_render_history: No history entries found")
             ui.label("No task execution history yet").classes("text-grey-6")
             ui.label("Execute a task to get started!").classes("text-caption text-grey-7")
             return
@@ -171,8 +176,17 @@ class HistoryList:
 
     def refresh(self) -> None:
         """Refresh the history list."""
+        logger.info("HistoryList.refresh() called")
         if not self.container:
+            logger.warning("HistoryList container is None, cannot refresh")
             return
+
+        # Query history data first to check if there's new data
+        history_entries = self.repository.get_task_history()
+        logger.info(f"Found {len(history_entries)} history entries in database")
+
+        # Clear table reference
+        self.table = None
 
         # Clear and re-render
         self.container.clear()

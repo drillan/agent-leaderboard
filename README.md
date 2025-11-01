@@ -96,10 +96,10 @@ path = "agent_leaderboard.duckdb"
 
 ```bash
 # Start the web interface
-uv run python src/main.py
+uv run python -m src.main
 
 # Or with custom config
-uv run python src/main.py --config path/to/config.toml
+uv run python -m src.main --config path/to/config.toml
 ```
 
 The web interface will be available at `http://localhost:8080`.
@@ -264,4 +264,4 @@ See [CLAUDE.md](CLAUDE.md) for detailed development principles.
 
 ---
 
-**Ready to start?** Run `uv run python src/main.py` and execute your first task!
+**Ready to start?** Run `uv run python -m src.main` and execute your first task!

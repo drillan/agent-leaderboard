@@ -180,9 +180,11 @@ def main() -> None:
 
         # Refresh data when switching to Performance or History tabs
         def on_tab_change(e):  # type: ignore[no-untyped-def]
-            if e.value == perf_tab and perf_page:
+            # e.args is the new tab value
+            new_tab = e.args if hasattr(e, "args") else None
+            if new_tab == perf_tab and perf_page:
                 perf_page.refresh()
-            elif e.value == history_tab and history_page:
+            elif new_tab == history_tab and history_page:
                 history_page.refresh()
 
         tabs.on("update:model-value", on_tab_change)

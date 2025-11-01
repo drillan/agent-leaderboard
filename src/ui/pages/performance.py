@@ -108,7 +108,10 @@ class PerformancePage:
             logger.info("Charts exist, calling charts.refresh()")
             self.charts.refresh()
         else:
-            logger.warning("Charts is None, cannot refresh")
+            logger.warning("Charts is None, creating charts for the first time")
+            # Charts were not created initially (no tasks existed)
+            # Create them now
+            self.charts = create_performance_charts(self.repository, self.current_task_id)
 
 
 def create_performance_page(config: AppConfig, db: DatabaseConnection) -> None:

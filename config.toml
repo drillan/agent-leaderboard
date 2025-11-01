@@ -20,7 +20,7 @@ api_key_env = "GROQ_API_KEY"
 [evaluation_agent]
 # Groq provides fast and free evaluation
 provider = "groq"
-model = "groq/compound-mini"
+model = "llama-3.1-8b-instant"
 api_key_env = "GROQ_API_KEY"
 prompt = """You are evaluating the performance of an AI agent that completed a task.
 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1>🤖 {{ title }}</h1>
+
+<!-- タスク実行フォーム -->
+<div class="task-form">
+    <form hx-post="/execute"
+          hx-target="#results"
+          hx-swap="innerHTML"
+          hx-indicator="#spinner">
+
+        <input type="text"
+               name="task"
+               placeholder="タスクを入力... (例: Check if 17 is prime)"
+               required>
+
+        <button type="submit">
+            実行
+            <span id="spinner" class="htmx-indicator">⏳</span>
+        </button>
+    </form>
+</div>
+
+<!-- リーダーボード表示エリア -->
+<div id="results">
+    <p style="color: #666; text-align: center; padding: 2rem;">
+        タスクを実行すると結果が表示されます
+    </p>
+</div>
+{% endblock %}

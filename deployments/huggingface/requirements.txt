@@ -1,0 +1,3 @@
+# Hugging Face Spaces dependencies
+-r ../../shared/requirements-core.txt
+nicegui>=2.9.0,<3.0.0

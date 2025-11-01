@@ -11,8 +11,7 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 
 # Copy dependency files
-COPY shared/pyproject.toml pyproject.toml
-COPY uv.lock ./
+COPY pyproject.toml uv.lock ./
 
 # Install dependencies (production only, no dev dependencies)
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -28,10 +27,9 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 # Copy application source
-COPY shared/src/ ./src/
-COPY shared/config.toml ./
+COPY src/ ./src/
+COPY config.toml ./
 COPY .env.example ./
-COPY deployments/huggingface/main.py ./main.py
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
@@ -61,4 +59,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860')"
 
 # Run application
-CMD ["python", "main.py", "--host", "0.0.0.0", "--port", "7860", "--config", "config.toml"]
+CMD ["python", "src/main.py", "--host", "0.0.0.0", "--port", "7860"]

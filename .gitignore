@@ -223,3 +223,8 @@ agent_leaderboard.duckdb*
 /plans
 /debug
 /logs
+
+# デプロイメント固有
+deployments/*/agent_leaderboard.duckdb*
+deployments/*/agent_leaderboard.log
+deployments/*/.env

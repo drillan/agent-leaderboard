@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: agent-leaderboard
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: deployments/render
+    buildCommand: |
+      cd ../..
+      pip install -r shared/requirements-core.txt
+      pip install -r deployments/render/requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: PYTHON_VERSION
+        value: "3.13"
+    autoDeploy: true

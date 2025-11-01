@@ -1,0 +1,43 @@
+<div class="leaderboard">
+    <h2>🏆 リーダーボード</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>モデル</th>
+                <th>スコア</th>
+                <th>実行時間</th>
+                <th>説明</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td><strong>{{ loop.index }}</strong></td>
+                <td>{{ result.model }}</td>
+                <td>
+                    <strong style="font-size: 1.2em; color: #0066cc;">
+                        {{ result.score }}
+                    </strong>/100
+                </td>
+                <td>{{ "%.2f"|format(result.duration) }}s</td>
+                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ result.explanation[:100] }}...
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- チャートを動的に読み込み -->
+    <div hx-get="/chart/{{ execution_id }}"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         id="chart-container"
+         style="margin-top: 2rem;">
+        <p style="text-align: center; color: #666;">
+            チャートを読み込み中...
+        </p>
+    </div>
+</div>

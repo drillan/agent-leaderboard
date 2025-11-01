@@ -180,12 +180,22 @@ def main() -> None:
 
         # Refresh data when switching to Performance or History tabs
         def on_tab_change(e):  # type: ignore[no-untyped-def]
+            # Debug: Log event details
+            logging.info(f"Tab change event triggered: {type(e)}")
+            logging.info(f"Event attributes: {dir(e)}")
+
             # e.args is the new tab value
             new_tab = e.args if hasattr(e, "args") else None
+            logging.info(f"New tab value: {new_tab}, perf_tab: {perf_tab}, history_tab: {history_tab}")
+
             if new_tab == perf_tab and perf_page:
+                logging.info("Refreshing Performance page")
                 perf_page.refresh()
             elif new_tab == history_tab and history_page:
+                logging.info("Refreshing History page")
                 history_page.refresh()
+            else:
+                logging.info(f"No refresh triggered (new_tab={new_tab})")
 
         tabs.on("update:model-value", on_tab_change)
 

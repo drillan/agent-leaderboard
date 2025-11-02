@@ -433,8 +433,8 @@ async def get_history_list(request: Request):
         db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
-        # 過去のタスクを取得（最新50件）
-        tasks = repository.get_recent_tasks(limit=50)
+        # タスク履歴を取得
+        tasks = repository.get_task_history()
 
         if not tasks:
             return HTMLResponse(content='<p class="placeholder">履歴はまだありません</p>')
@@ -442,9 +442,11 @@ async def get_history_list(request: Request):
         html = '<div class="history-list">'
 
         for task in tasks:
-            # task は TaskSubmission オブジェクト
-            task_id = task.id if hasattr(task, 'id') else task.get('id')
-            prompt = (task.prompt if hasattr(task, 'prompt') else task.get('prompt', ''))[:100]
+            # task は辞書オブジェクト
+            task_id = task.get('id')
+            prompt = task.get('prompt', '')[:100]
+            submitted_at = task.get('submitted_at', 'Unknown')
+            execution_count = task.get('execution_count', 0)
 
             html += f'''
             <div class="history-item"
@@ -453,7 +455,8 @@ async def get_history_list(request: Request):
                  hx-swap="innerHTML">
                 <div class="task-prompt">{prompt}...</div>
                 <div class="task-meta">
-                    <span class="timestamp">{task.created_at if hasattr(task, "created_at") else "Unknown"}</span>
+                    <span class="timestamp">{submitted_at}</span>
+                    <span class="agent-count">{execution_count}エージェント</span>
                 </div>
             </div>
             '''
@@ -675,8 +678,24 @@ async def get_execution_detail(request: Request, execution_id: int):
         if not execution:
             return HTMLResponse(content='<p class="error-message">実行が見つかりません</p>')
 
-        # 評価結果を取得
-        evaluation = repository.get_evaluation(execution_id)
+        # 評価結果を取得（DBから直接取得）
+        conn = db.connect()
+        evaluation_row = conn.execute(
+            "SELECT score, explanation FROM evaluations WHERE execution_id = ?",
+            [execution_id]
+        ).fetchone()
+
+        evaluation = None
+        if evaluation_row:
+            evaluation = {
+                "score": evaluation_row[0],
+                "explanation": evaluation_row[1]
+            }
+        else:
+            evaluation = {
+                "score": 0,
+                "explanation": "評価なし"
+            }
 
         # メッセージを解析（JSON形式で保存されている想定）
         import json

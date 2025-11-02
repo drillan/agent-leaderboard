@@ -30,6 +30,15 @@ function setupHtmxListeners() {
         // スクロールを最上部に
         window.scrollTo(0, 0);
 
+        // 実行詳細モーダル表示処理
+        const modalContent = document.querySelector('#modal .modal-content');
+        if (evt.detail.target && evt.detail.target === modalContent) {
+            const modal = document.getElementById('modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
         // 実行タブの結果表示処理
         const resultsDiv = document.getElementById('results');
         if (evt.detail.target && evt.detail.target.id === 'results' && resultsDiv) {

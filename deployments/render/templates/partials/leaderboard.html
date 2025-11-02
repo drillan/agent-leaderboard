@@ -32,10 +32,11 @@
                             hx-get="/execution/{{ result.execution_id }}/detail"
                             hx-target="#modal .modal-content"
                             hx-swap="innerHTML"
-                            hx-on="htmx:afterSwap: document.getElementById('modal').classList.remove('hidden')"
                             style="padding: 0.5rem 1rem; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
                         👁️ 詳細
                     </button>
+                    {% else %}
+                    <span style="color: #999; font-size: 0.9em;">-</span>
                     {% endif %}
                 </td>
             </tr>

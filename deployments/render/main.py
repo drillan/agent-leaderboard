@@ -425,8 +425,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
                 error_y={
                     "type": "data",
                     "array": std_durations,
-                    "visible": True,
-                    "symmetric": False
+                    "visible": True
                 },
                 marker_color='rgb(99, 110, 250)',
                 name='平均実行時間',
@@ -461,8 +460,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
                 error_y={
                     "type": "data",
                     "array": std_tokens,
-                    "visible": True,
-                    "symmetric": False
+                    "visible": True
                 },
                 marker_color='rgb(239, 85, 59)',
                 name='平均トークン数',

@@ -405,16 +405,36 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
 
         # 実行時間チャート
         durations = [m['avg_duration'] for m in metrics_data]
+        std_durations = [m['std_duration'] for m in metrics_data]
+        counts = [m['execution_count'] for m in metrics_data]
+
+        # 詳細統計のホバーテキスト
+        duration_hover_texts = [
+            f"平均: {m['avg_duration']:.2f}秒<br>"
+            f"標準偏差: {m['std_duration']:.2f}秒<br>"
+            f"最小: {m['min_duration']:.2f}秒<br>"
+            f"最大: {m['max_duration']:.2f}秒<br>"
+            f"実行回数: {m['execution_count']}"
+            for m in metrics_data
+        ]
+
         duration_fig = go.Figure(data=[
             go.Bar(
                 x=models,
                 y=durations,
+                error_y={
+                    "type": "data",
+                    "array": std_durations,
+                    "visible": True
+                },
                 marker_color='rgb(99, 110, 250)',
-                name='平均実行時間'
+                name='平均実行時間',
+                hovertext=duration_hover_texts,
+                hoverinfo="text"
             )
         ])
         duration_fig.update_layout(
-            title="実行時間（秒）",
+            title="実行時間（平均 ± 標準偏差）",
             xaxis_title="モデル",
             yaxis_title="時間（秒）",
             template="plotly_white",
@@ -423,16 +443,33 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
 
         # トークン消費チャート
         tokens = [m['avg_tokens'] for m in metrics_data]
+        std_tokens = [m['std_tokens'] for m in metrics_data]
+
+        # 詳細統計のホバーテキスト
+        token_hover_texts = [
+            f"平均: {m['avg_tokens']:.0f}トークン<br>"
+            f"標準偏差: {m['std_tokens']:.0f}トークン<br>"
+            f"実行回数: {m['execution_count']}"
+            for m in metrics_data
+        ]
+
         token_fig = go.Figure(data=[
             go.Bar(
                 x=models,
                 y=tokens,
+                error_y={
+                    "type": "data",
+                    "array": std_tokens,
+                    "visible": True
+                },
                 marker_color='rgb(239, 85, 59)',
-                name='平均トークン数'
+                name='平均トークン数',
+                hovertext=token_hover_texts,
+                hoverinfo="text"
             )
         ])
         token_fig.update_layout(
-            title="トークン消費",
+            title="トークン消費（平均 ± 標準偏差）",
             xaxis_title="モデル",
             yaxis_title="トークン数",
             template="plotly_white",

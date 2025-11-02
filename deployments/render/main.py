@@ -43,6 +43,16 @@ templates = Jinja2Templates(directory="templates")
 # グローバル状態管理（セッション）
 execution_results: dict[str, list] = {}
 
+# データベース初期化
+db_path = project_root / "shared" / "database.db"
+try:
+    db = DatabaseConnection(db_path)
+    db.initialize_schema()
+    db.close()
+    logger.info(f"Database schema initialized at {db_path}")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {e}")
+
 # 設定をロード
 config_path = project_root / "shared" / "config.toml"
 try:
@@ -249,19 +259,25 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
     try:
         # DBコネクションとリポジトリを初期化
         db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
         # パフォーマンスメトリクスを取得
-        if task_id == "all":
-            metrics_data = repository.get_performance_metrics(task_id=None)
-        else:
-            try:
-                metrics_data = repository.get_performance_metrics(task_id=int(task_id))
-            except ValueError:
-                metrics_data = []
+        metrics_data = []
+        try:
+            if task_id == "all":
+                metrics_data = repository.get_performance_metrics(task_id=None)
+            else:
+                try:
+                    metrics_data = repository.get_performance_metrics(task_id=int(task_id))
+                except ValueError:
+                    metrics_data = []
+        except Exception as e:
+            logger.warning(f"Failed to fetch performance metrics: {e}")
+            metrics_data = []
 
         if not metrics_data:
-            return HTMLResponse(content='<p class="placeholder">データがありません</p>')
+            return HTMLResponse(content='<p class="placeholder">データがありません。タスクを実行してください。</p>')
 
         # モデル名を抽出
         models = [f"{m['model_provider']}/{m['model_name']}" for m in metrics_data]
@@ -357,18 +373,24 @@ async def get_performance_stats(request: Request, task_id: str = "all"):
     """パフォーマンス統計情報を取得."""
     try:
         db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
-        if task_id == "all":
-            metrics_data = repository.get_performance_metrics(task_id=None)
-        else:
-            try:
-                metrics_data = repository.get_performance_metrics(task_id=int(task_id))
-            except ValueError:
-                metrics_data = []
+        metrics_data = []
+        try:
+            if task_id == "all":
+                metrics_data = repository.get_performance_metrics(task_id=None)
+            else:
+                try:
+                    metrics_data = repository.get_performance_metrics(task_id=int(task_id))
+                except ValueError:
+                    metrics_data = []
+        except Exception as e:
+            logger.warning(f"Failed to fetch performance stats: {e}")
+            metrics_data = []
 
         if not metrics_data:
-            return HTMLResponse(content='<p class="placeholder">データがありません</p>')
+            return HTMLResponse(content='<p class="placeholder">データがありません。タスクを実行してください。</p>')
 
         # 統計情報を表示
         html = '<table style="width: 100%;">'
@@ -408,6 +430,7 @@ async def get_history_list(request: Request):
     """履歴リストを取得."""
     try:
         db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
         # 過去のタスクを取得（最新50件）
@@ -450,6 +473,7 @@ async def get_history_leaderboard(request: Request, task_id: int):
     """過去タスクのリーダーボードを取得."""
     try:
         db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
         # 指定されたタスクのリーダーボードを取得
@@ -643,6 +667,7 @@ async def get_execution_detail(request: Request, execution_id: int):
     """実行詳細をモーダルで表示."""
     try:
         db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()  # スキーマを確認
         repository = TaskRepository(db)
 
         # 実行情報を取得

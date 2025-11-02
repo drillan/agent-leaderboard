@@ -156,8 +156,9 @@ async def execute_task(request: Request, task: str = Form(...)):
         evaluated_results = []
         for execution in executions:
             try:
-                # DBに実行結果を保存
-                repository.update_execution_result(execution)
+                # DBに実行結果を保存（ID を取得）
+                execution.id = repository.create_execution(execution)
+                logger.info(f"Execution created with ID: {execution.id}")
 
                 # メッセージから応答を抽出
                 if execution.all_messages_json:

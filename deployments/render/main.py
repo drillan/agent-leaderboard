@@ -126,11 +126,19 @@ async def execute_task(request: Request, task: str = Form(...)):
                 content="<p style='color: red;'>設定ファイルが読み込めません</p>"
             )
 
+        # データベースを初期化
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        db.initialize_schema()
+        repository = TaskRepository(db)
+
         # タスクエージェントを作成
         agents = [create_task_agent(model_config) for model_config in config.task_agents]
 
-        # タスクをDBに保存（簡易版：task_id=0）
-        task_id = 0
+        # タスクをDBに保存
+        from src.models.task import TaskSubmission
+        task_submission = TaskSubmission(prompt=task)
+        task_id = repository.create_task(task_submission)
+        logger.info(f"Task created with ID: {task_id}")
 
         # エージェントを並列実行
         executions = await execute_multi_agent(
@@ -148,6 +156,9 @@ async def execute_task(request: Request, task: str = Form(...)):
         evaluated_results = []
         for execution in executions:
             try:
+                # DBに実行結果を保存
+                repository.update_execution_result(execution)
+
                 # メッセージから応答を抽出
                 if execution.all_messages_json:
                     agent_response = extract_agent_response(execution.all_messages_json)
@@ -160,6 +171,9 @@ async def execute_task(request: Request, task: str = Form(...)):
                         eval_agent=eval_agent,
                         timeout_seconds=30.0
                     )
+
+                    # 評価をDBに保存
+                    repository.create_evaluation(evaluation)
 
                     # 結果を辞書で保存
                     evaluated_results.append({
@@ -194,6 +208,8 @@ async def execute_task(request: Request, task: str = Form(...)):
         # セッションに保存
         execution_id = str(uuid.uuid4())
         execution_results[execution_id] = evaluated_results
+
+        db.close()
 
         # リーダーボードHTMLを返す
         return templates.TemplateResponse(

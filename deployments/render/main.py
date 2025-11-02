@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 from src.config.loader import ConfigLoader
 from src.agents.task_agent import create_task_agent
 from src.agents.eval_agent import create_evaluation_agent
-from src.execution.executor import execute_multi_agent
+from src.execution.executor import execute_multi_agent, extract_tool_hierarchy
 from src.execution.evaluator import evaluate_execution, extract_agent_response
 from src.database.connection import DatabaseConnection
 from src.database.repositories import TaskRepository
@@ -818,35 +818,34 @@ async def get_execution_detail(request: Request, execution_id: int):
                 "explanation": "評価なし"
             }
 
-        # メッセージを解析（JSON形式で保存されている想定）
+        # エージェントの最終応答を抽出
         import json
-        messages = []
-        tool_calls = []
+        agent_response = extract_agent_response(execution.all_messages_json)
 
+        # ツール呼び出しツリーを抽出
+        tool_calls = []
+        try:
+            tool_hierarchy = extract_tool_hierarchy(execution)
+            for node in tool_hierarchy:
+                tool_calls.append({
+                    "call_id": node.get("call_id", "unknown"),
+                    "tool_name": node.get("tool_name", "Unknown"),
+                    "args": json.dumps(node.get("args", {}), indent=2, ensure_ascii=False),
+                    "result": json.dumps(node.get("result", {}), indent=2, ensure_ascii=False)
+                })
+        except Exception as e:
+            logger.warning(f"Failed to extract tool hierarchy: {e}")
+            tool_calls = []
+
+        # メッセージを抽出（実行ログ表示用）
+        messages = []
         if execution.all_messages_json:
             try:
                 all_data = json.loads(execution.all_messages_json)
-
-                # メッセージを抽出
-                if isinstance(all_data, dict):
-                    messages = all_data.get("messages", [])
-                elif isinstance(all_data, list):
+                if isinstance(all_data, list):
                     messages = all_data
-
-                # メッセージからツール呼び出しを抽出
-                if isinstance(all_data, dict):
-                    tool_uses = all_data.get("tool_uses", [])
-                    for i, tool_use in enumerate(tool_uses, 1):
-                        tool_calls.append({
-                            "call_id": i,
-                            "tool_name": tool_use.get("tool_name", "Unknown"),
-                            "args": json.dumps(tool_use.get("args", {}), indent=2, ensure_ascii=False),
-                            "result": json.dumps(tool_use.get("result", {}), indent=2, ensure_ascii=False) if "result" in tool_use else None
-                        })
             except (json.JSONDecodeError, AttributeError) as e:
                 logger.warning(f"Failed to parse all_messages_json: {e}")
-                messages = []
-                tool_calls = []
 
         # インライン表示用テンプレートを返す（モーダルではなく）
         return templates.TemplateResponse(
@@ -855,6 +854,7 @@ async def get_execution_detail(request: Request, execution_id: int):
                 "request": request,
                 "execution": execution,
                 "evaluation": evaluation,
+                "agent_response": agent_response,
                 "messages": messages,
                 "tool_calls": tool_calls
             }

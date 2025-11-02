@@ -1,0 +1,33 @@
+<div class="history-tab">
+    <h2>📜 実行履歴</h2>
+
+    <p style="color: #666; margin-bottom: 1.5rem;">過去に実行したタスクの結果を確認できます。</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- 履歴リスト -->
+        <div>
+            <h3>実行済みタスク</h3>
+            <div class="history-list" id="history-list"
+                 hx-get="/history/list"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <p class="placeholder">履歴を読み込み中...</p>
+            </div>
+        </div>
+
+        <!-- 詳細表示 -->
+        <div>
+            <h3>タスク詳細</h3>
+            <div id="history-detail" class="card">
+                <p class="placeholder">左からタスクを選択してください</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 履歴リストをロード時に取得
+    document.addEventListener('htmx:load', function() {
+        htmx.ajax('GET', '/history/list', '#history-list');
+    });
+</script>

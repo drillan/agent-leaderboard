@@ -7,32 +7,73 @@
 
     <!-- htmx -->
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.0/dist/ext/sse.js"></script>
+
+    <!-- hyperscript (モーダル制御用) -->
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/tabs.css">
+    <link rel="stylesheet" href="/static/css/modal.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+            margin: 0;
+            padding: 0;
             background: #f5f5f5;
         }
 
-        .container {
+        .page-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
             background: white;
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
         }
 
-        h1 {
+        .header h1 {
+            margin: 0;
             color: #333;
-            margin-bottom: 1.5rem;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .main-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .container {
+            padding: 2rem;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #333;
         }
 
         .task-form {
@@ -62,8 +103,14 @@
             background: #0052a3;
         }
 
+        .task-form button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
         .htmx-indicator {
             display: none;
+            margin-left: 0.5rem;
         }
 
         .htmx-request .htmx-indicator {
@@ -90,14 +137,178 @@
         tr:hover {
             background: #f8f9fa;
         }
+
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button[type="button"] {
+            padding: 0.5rem 1rem;
+            background: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 0.25rem;
+        }
+
+        button[type="button"]:hover {
+            background: #d0d0d0;
+        }
+
+        select, input[type="text"], input[type="number"], textarea {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        select, textarea {
+            font-family: inherit;
+        }
+
+        form section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        form section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .agent-config {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: flex-end;
+        }
+
+        .agent-config select, .agent-config input {
+            flex: 1;
+        }
+
+        .success-message {
+            padding: 1rem;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .error-message {
+            padding: 1rem;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .placeholder {
+            color: #999;
+            text-align: center;
+            padding: 2rem;
+        }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <div class="container">
-        {% block content %}{% endblock %}
+    <div class="page-wrapper">
+        <div class="header">
+            <h1>🤖 Multi-Agent Competition System</h1>
+            <p>複数のAIエージェントがタスクに取り組み、パフォーマンスを競い合います</p>
+        </div>
+
+        <div class="main-container">
+            <!-- タブナビゲーション -->
+            <nav class="tabs">
+                <button class="tab active"
+                        hx-get="/tabs/execution"
+                        hx-target="#main-content"
+                        hx-swap="innerHTML"
+                        onclick="setActiveTab(this)">
+                    🚀 タスク実行
+                </button>
+                <button class="tab"
+                        hx-get="/tabs/performance"
+                        hx-target="#main-content"
+                        hx-swap="innerHTML"
+                        onclick="setActiveTab(this)">
+                    📊 パフォーマンス
+                </button>
+                <button class="tab"
+                        hx-get="/tabs/history"
+                        hx-target="#main-content"
+                        hx-swap="innerHTML"
+                        onclick="setActiveTab(this)">
+                    📜 履歴
+                </button>
+                <button class="tab"
+                        hx-get="/tabs/settings"
+                        hx-target="#main-content"
+                        hx-swap="innerHTML"
+                        onclick="setActiveTab(this)">
+                    ⚙️ 設定
+                </button>
+            </nav>
+
+            <!-- メインコンテンツエリア -->
+            <div id="main-content" class="container">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
     </div>
+
+    <!-- モーダルダイアログ -->
+    <div id="modal" class="modal hidden"
+         _="on click if target == me add .hidden to me">
+        <div class="modal-content" _="on click halt the event">
+            <!-- コンテンツはJavaScriptで動的に挿入 -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * タブをアクティブに設定.
+         */
+        function setActiveTab(element) {
+            // すべてのタブから active クラスを削除
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // クリックされたタブに active クラスを追加
+            element.classList.add('active');
+        }
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

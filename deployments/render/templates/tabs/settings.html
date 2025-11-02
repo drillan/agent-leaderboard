@@ -1,0 +1,27 @@
+<div class="settings-tab">
+    <h2>⚙️ 設定</h2>
+
+    <p style="color: #666; margin-bottom: 1.5rem;">エージェント設定と実行パラメータをカスタマイズします。</p>
+
+    <div id="settings-form-container"
+         hx-get="/settings/form"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <p class="placeholder">設定フォームを読み込み中...</p>
+    </div>
+</div>
+
+<script>
+    // フォーム送信時の成功メッセージハンドリング
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'settings-result') {
+            // 成功メッセージが表示されたら 2秒後に非表示にする
+            setTimeout(function() {
+                const message = document.querySelector('.success-message');
+                if (message) {
+                    message.style.opacity = '0.5';
+                }
+            }, 2000);
+        }
+    });
+</script>

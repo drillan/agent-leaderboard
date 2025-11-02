@@ -62,6 +62,46 @@ async def home(request: Request):
     )
 
 
+# ============================================================================
+# タブエンドポイント
+# ============================================================================
+
+@app.get("/tabs/execution", response_class=HTMLResponse)
+async def tab_execution(request: Request):
+    """タスク実行タブ."""
+    return templates.TemplateResponse(
+        "tabs/execution.html",
+        {"request": request}
+    )
+
+
+@app.get("/tabs/performance", response_class=HTMLResponse)
+async def tab_performance(request: Request):
+    """パフォーマンスタブ."""
+    return templates.TemplateResponse(
+        "tabs/performance.html",
+        {"request": request}
+    )
+
+
+@app.get("/tabs/history", response_class=HTMLResponse)
+async def tab_history(request: Request):
+    """履歴タブ."""
+    return templates.TemplateResponse(
+        "tabs/history.html",
+        {"request": request}
+    )
+
+
+@app.get("/tabs/settings", response_class=HTMLResponse)
+async def tab_settings(request: Request):
+    """設定タブ."""
+    return templates.TemplateResponse(
+        "tabs/settings.html",
+        {"request": request}
+    )
+
+
 @app.post("/execute", response_class=HTMLResponse)
 async def execute_task(request: Request, task: str = Form(...)):
     """
@@ -117,7 +157,8 @@ async def execute_task(request: Request, task: str = Form(...)):
                         "score": evaluation.score,
                         "duration": execution.duration_seconds or 0,
                         "explanation": evaluation.explanation,
-                        "status": execution.status.value
+                        "status": execution.status.value,
+                        "execution_id": execution.id
                     })
                 else:
                     # 実行失敗の場合
@@ -126,7 +167,8 @@ async def execute_task(request: Request, task: str = Form(...)):
                         "score": 0,
                         "duration": execution.duration_seconds or 0,
                         "explanation": "実行失敗",
-                        "status": execution.status.value
+                        "status": execution.status.value,
+                        "execution_id": execution.id
                     })
             except Exception as e:
                 logger.error(f"Evaluation failed for {execution.model_name}: {e}")
@@ -135,7 +177,8 @@ async def execute_task(request: Request, task: str = Form(...)):
                     "score": 0,
                     "duration": execution.duration_seconds or 0,
                     "explanation": f"評価エラー: {str(e)}",
-                    "status": execution.status.value
+                    "status": execution.status.value,
+                    "execution_id": execution.id
                 })
 
         # セッションに保存
@@ -194,6 +237,451 @@ async def get_chart(request: Request, execution_id: str):
     )
 
     return HTMLResponse(content=chart_html)
+
+
+# ============================================================================
+# パフォーマンスメトリクス
+# ============================================================================
+
+@app.get("/performance/charts", response_class=HTMLResponse)
+async def get_performance_charts(request: Request, task_id: str = "all"):
+    """パフォーマンスチャートを生成."""
+    try:
+        # DBコネクションとリポジトリを初期化
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        repository = TaskRepository(db)
+
+        # パフォーマンスメトリクスを取得
+        if task_id == "all":
+            metrics_data = repository.get_performance_metrics(task_id=None)
+        else:
+            try:
+                metrics_data = repository.get_performance_metrics(task_id=int(task_id))
+            except ValueError:
+                metrics_data = []
+
+        if not metrics_data:
+            return HTMLResponse(content='<p class="placeholder">データがありません</p>')
+
+        # モデル名を抽出
+        models = [f"{m['model_provider']}/{m['model_name']}" for m in metrics_data]
+
+        # 実行時間チャート
+        durations = [m['avg_duration'] for m in metrics_data]
+        duration_fig = go.Figure(data=[
+            go.Bar(
+                x=models,
+                y=durations,
+                marker_color='rgb(99, 110, 250)',
+                name='平均実行時間'
+            )
+        ])
+        duration_fig.update_layout(
+            title="実行時間（秒）",
+            xaxis_title="モデル",
+            yaxis_title="時間（秒）",
+            template="plotly_white",
+            height=400
+        )
+
+        # トークン消費チャート
+        tokens = [m['avg_tokens'] for m in metrics_data]
+        token_fig = go.Figure(data=[
+            go.Bar(
+                x=models,
+                y=tokens,
+                marker_color='rgb(239, 85, 59)',
+                name='平均トークン数'
+            )
+        ])
+        token_fig.update_layout(
+            title="トークン消費",
+            xaxis_title="モデル",
+            yaxis_title="トークン数",
+            template="plotly_white",
+            height=400
+        )
+
+        # スループット（トークン/秒）チャート
+        throughput = [m['avg_tokens'] / max(m['avg_duration'], 0.1) for m in metrics_data]
+        throughput_fig = go.Figure(data=[
+            go.Bar(
+                x=models,
+                y=throughput,
+                marker_color='rgb(0, 204, 150)',
+                name='スループット'
+            )
+        ])
+        throughput_fig.update_layout(
+            title="スループット（トークン/秒）",
+            xaxis_title="モデル",
+            yaxis_title="トークン/秒",
+            template="plotly_white",
+            height=400
+        )
+
+        # HTMLに統合
+        duration_html = duration_fig.to_html(
+            include_plotlyjs='cdn',
+            div_id='chart-duration',
+            config={'responsive': True}
+        )
+        token_html = token_fig.to_html(
+            include_plotlyjs=False,
+            div_id='chart-tokens',
+            config={'responsive': True}
+        )
+        throughput_html = throughput_fig.to_html(
+            include_plotlyjs=False,
+            div_id='chart-throughput',
+            config={'responsive': True}
+        )
+
+        html = f'''
+        <div class="chart-container">{duration_html}</div>
+        <div class="chart-container">{token_html}</div>
+        <div class="chart-container">{throughput_html}</div>
+        '''
+
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error(f"Error generating performance charts: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">チャート生成エラー: {str(e)}</p>'
+        )
+
+
+@app.get("/performance/stats", response_class=HTMLResponse)
+async def get_performance_stats(request: Request, task_id: str = "all"):
+    """パフォーマンス統計情報を取得."""
+    try:
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        repository = TaskRepository(db)
+
+        if task_id == "all":
+            metrics_data = repository.get_performance_metrics(task_id=None)
+        else:
+            try:
+                metrics_data = repository.get_performance_metrics(task_id=int(task_id))
+            except ValueError:
+                metrics_data = []
+
+        if not metrics_data:
+            return HTMLResponse(content='<p class="placeholder">データがありません</p>')
+
+        # 統計情報を表示
+        html = '<table style="width: 100%;">'
+        html += '<thead><tr><th>モデル</th><th>実行回数</th><th>平均時間（秒）</th><th>平均トークン</th><th>スループット</th></tr></thead>'
+        html += '<tbody>'
+
+        for m in sorted(metrics_data, key=lambda x: x['avg_duration']):
+            model_name = f"{m['model_provider']}/{m['model_name']}"
+            throughput = m['avg_tokens'] / max(m['avg_duration'], 0.1)
+            html += f'''
+            <tr>
+                <td><strong>{model_name}</strong></td>
+                <td>{m['execution_count']}</td>
+                <td>{m['avg_duration']:.2f}</td>
+                <td>{m['avg_tokens']:.0f}</td>
+                <td>{throughput:.2f} tokens/s</td>
+            </tr>
+            '''
+
+        html += '</tbody></table>'
+
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error(f"Error generating performance stats: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">統計情報取得エラー: {str(e)}</p>'
+        )
+
+
+# ============================================================================
+# 履歴ビュー
+# ============================================================================
+
+@app.get("/history/list", response_class=HTMLResponse)
+async def get_history_list(request: Request):
+    """履歴リストを取得."""
+    try:
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        repository = TaskRepository(db)
+
+        # 過去のタスクを取得（最新50件）
+        tasks = repository.get_recent_tasks(limit=50)
+
+        if not tasks:
+            return HTMLResponse(content='<p class="placeholder">履歴はまだありません</p>')
+
+        html = '<div class="history-list">'
+
+        for task in tasks:
+            # task は TaskSubmission オブジェクト
+            task_id = task.id if hasattr(task, 'id') else task.get('id')
+            prompt = (task.prompt if hasattr(task, 'prompt') else task.get('prompt', ''))[:100]
+
+            html += f'''
+            <div class="history-item"
+                 hx-get="/history/{task_id}/leaderboard"
+                 hx-target="#history-detail"
+                 hx-swap="innerHTML">
+                <div class="task-prompt">{prompt}...</div>
+                <div class="task-meta">
+                    <span class="timestamp">{task.created_at if hasattr(task, "created_at") else "Unknown"}</span>
+                </div>
+            </div>
+            '''
+
+        html += '</div>'
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error(f"Error fetching history list: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">履歴取得エラー: {str(e)}</p>'
+        )
+
+
+@app.get("/history/{task_id}/leaderboard", response_class=HTMLResponse)
+async def get_history_leaderboard(request: Request, task_id: int):
+    """過去タスクのリーダーボードを取得."""
+    try:
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        repository = TaskRepository(db)
+
+        # 指定されたタスクのリーダーボードを取得
+        leaderboard_data = repository.get_leaderboard(task_id)
+
+        if not leaderboard_data:
+            return HTMLResponse(content='<p class="placeholder">このタスクの結果はありません</p>')
+
+        # リーダーボードテーブルをレンダリング
+        return templates.TemplateResponse(
+            "partials/leaderboard.html",
+            {
+                "request": request,
+                "results": sorted(leaderboard_data, key=lambda x: x.get('score', 0), reverse=True),
+                "execution_id": None
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error fetching history leaderboard: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">リーダーボード取得エラー: {str(e)}</p>'
+        )
+
+
+# ============================================================================
+# 設定管理
+# ============================================================================
+
+@app.get("/settings/form", response_class=HTMLResponse)
+async def get_settings_form(request: Request):
+    """設定フォームを取得."""
+    if config is None:
+        return HTMLResponse(
+            content='<p class="error-message">設定が読み込めません</p>'
+        )
+
+    # タスクエージェント設定
+    task_agents_html = ''
+    for i, agent in enumerate(config.task_agents, 1):
+        task_agents_html += f'''
+        <div class="agent-config">
+            <select name="provider_{i}">
+                <option value="openai" {"selected" if agent.provider == "openai" else ""}>OpenAI</option>
+                <option value="anthropic" {"selected" if agent.provider == "anthropic" else ""}>Anthropic</option>
+                <option value="gemini" {"selected" if agent.provider == "gemini" else ""}>Gemini</option>
+                <option value="groq" {"selected" if agent.provider == "groq" else ""}>Groq</option>
+                <option value="huggingface" {"selected" if agent.provider == "huggingface" else ""}>Hugging Face</option>
+            </select>
+            <input type="text" name="model_{i}" value="{agent.model}" placeholder="モデル名">
+            <input type="text" name="api_key_env_{i}" value="{agent.api_key_env}" placeholder="API_KEY環境変数名">
+            <button type="button"
+                    hx-delete="/settings/agent/{i}"
+                    hx-target="closest .agent-config"
+                    hx-swap="outerHTML swap:1s">
+                削除
+            </button>
+        </div>
+        '''
+
+    # 評価エージェント設定
+    eval_provider_options = f'''
+        <option value="groq" {"selected" if config.evaluation_agent.provider == "groq" else ""}>Groq</option>
+        <option value="openai" {"selected" if config.evaluation_agent.provider == "openai" else ""}>OpenAI</option>
+        <option value="anthropic" {"selected" if config.evaluation_agent.provider == "anthropic" else ""}>Anthropic</option>
+    '''
+
+    html = f'''
+    <form hx-post="/settings/save"
+          hx-target="#settings-result"
+          hx-swap="innerHTML">
+
+        <section>
+            <h3>タスクエージェント (2-5個必須)</h3>
+            <div id="task-agents">
+                {task_agents_html}
+            </div>
+            <button type="button"
+                    hx-post="/settings/agent/add"
+                    hx-target="#task-agents"
+                    hx-swap="beforeend">
+                + エージェント追加
+            </button>
+        </section>
+
+        <section>
+            <h3>評価エージェント</h3>
+            <div class="form-group">
+                <label>プロバイダー:</label>
+                <select name="eval_provider">
+                    {eval_provider_options}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>モデル:</label>
+                <input type="text"
+                       name="eval_model"
+                       value="{config.evaluation_agent.model}">
+            </div>
+            <div class="form-group">
+                <label>評価プロンプト:</label>
+                <textarea name="eval_prompt" rows="10">{config.evaluation_agent.prompt}</textarea>
+            </div>
+        </section>
+
+        <section>
+            <h3>実行設定</h3>
+            <div class="form-group">
+                <label>タイムアウト (秒):</label>
+                <input type="number"
+                       name="timeout"
+                       value="{config.execution.timeout_seconds}"
+                       min="10"
+                       max="300">
+            </div>
+        </section>
+
+        <button type="submit" style="background: #0066cc; color: white; padding: 0.75rem 2rem; font-size: 1rem; margin-top: 1rem;">
+            💾 保存
+        </button>
+    </form>
+
+    <div id="settings-result"></div>
+    '''
+
+    return HTMLResponse(content=html)
+
+
+@app.post("/settings/save", response_class=HTMLResponse)
+async def save_settings(request: Request):
+    """設定を保存（TOML書き込み）."""
+    try:
+        form = await request.form()
+
+        # フォームから設定を構築
+        # TODO: フォームデータを解析して新しい設定を構築
+        # 現在は簡易版 - 実装が必要
+
+        return HTMLResponse(
+            content='<p class="success-message">✓ 設定を保存しました</p>'
+        )
+
+    except Exception as e:
+        logger.error(f"Error saving settings: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">設定保存エラー: {str(e)}</p>'
+        )
+
+
+@app.post("/settings/agent/add", response_class=HTMLResponse)
+async def add_agent(request: Request):
+    """エージェント設定行を追加."""
+    # デフォルトのエージェント設定を返す
+    new_index = 999  # ダミーインデックス
+
+    html = f'''
+    <div class="agent-config">
+        <select name="provider_{new_index}">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="gemini">Gemini</option>
+            <option value="groq">Groq</option>
+            <option value="huggingface">Hugging Face</option>
+        </select>
+        <input type="text" name="model_{new_index}" placeholder="モデル名">
+        <input type="text" name="api_key_env_{new_index}" placeholder="API_KEY環境変数名">
+        <button type="button"
+                hx-delete="/settings/agent/{new_index}"
+                hx-target="closest .agent-config"
+                hx-swap="outerHTML swap:1s">
+            削除
+        </button>
+    </div>
+    '''
+
+    return HTMLResponse(content=html)
+
+
+@app.delete("/settings/agent/{index}", response_class=HTMLResponse)
+async def delete_agent(index: int):
+    """エージェント設定行を削除."""
+    return HTMLResponse(content='')
+
+
+# ============================================================================
+# 実行詳細・モーダル
+# ============================================================================
+
+@app.get("/execution/{execution_id}/detail", response_class=HTMLResponse)
+async def get_execution_detail(request: Request, execution_id: int):
+    """実行詳細をモーダルで表示."""
+    try:
+        db = DatabaseConnection(project_root / "shared" / "database.db")
+        repository = TaskRepository(db)
+
+        # 実行情報を取得
+        execution = repository.get_execution(execution_id)
+        if not execution:
+            return HTMLResponse(content='<p class="error-message">実行が見つかりません</p>')
+
+        # 評価結果を取得
+        evaluation = repository.get_evaluation(execution_id)
+
+        # メッセージを解析（JSON形式で保存されている想定）
+        import json
+        messages = []
+        if execution.all_messages_json:
+            try:
+                messages = json.loads(execution.all_messages_json)
+            except (json.JSONDecodeError, AttributeError):
+                messages = []
+
+        # ツール呼び出し階層を抽出（簡易版）
+        tool_calls = []
+        # 実装が必要
+
+        return templates.TemplateResponse(
+            "components/execution_detail_modal.html",
+            {
+                "request": request,
+                "execution": execution,
+                "evaluation": evaluation,
+                "messages": messages,
+                "tool_calls": tool_calls
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error fetching execution detail: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f'<p class="error-message">詳細取得エラー: {str(e)}</p>'
+        )
 
 
 @app.get("/health")

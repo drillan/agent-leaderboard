@@ -1,0 +1,46 @@
+<div class="performance-tab">
+    <h2>📊 パフォーマンスメトリクス</h2>
+
+    <p style="color: #666; margin-bottom: 1.5rem;">複数のタスク実行における、各エージェントのパフォーマンスを分析します。</p>
+
+    <!-- タスク選択 -->
+    <div class="task-selector">
+        <label for="task-filter">タスク選択:</label>
+        <select id="task-filter"
+                name="task_id"
+                hx-get="/performance/charts"
+                hx-target="#charts-container"
+                hx-include="this">
+            <option value="all">全タスク</option>
+            <!-- 実際のタスクはサーバーから取得 -->
+        </select>
+    </div>
+
+    <!-- チャート表示エリア -->
+    <div id="charts-container"
+         hx-get="/performance/charts?task_id=all"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="placeholder">
+            <p>チャートを読み込み中...</p>
+            <div class="loading" style="margin: 1rem auto;"></div>
+        </div>
+    </div>
+
+    <!-- メトリクス統計 -->
+    <div class="card" style="margin-top: 2rem;">
+        <h3>📈 統計情報</h3>
+        <div id="stats-container" hx-get="/performance/stats?task_id=all" hx-trigger="load" hx-swap="innerHTML">
+            <p class="placeholder">統計情報を読み込み中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // タスク選択フィルターが変更された時、チャートを再読み込み
+    document.getElementById('task-filter').addEventListener('change', function() {
+        const taskId = this.value;
+        htmx.ajax('GET', `/performance/charts?task_id=${taskId}`, '#charts-container');
+        htmx.ajax('GET', `/performance/stats?task_id=${taskId}`, '#stats-container');
+    });
+</script>

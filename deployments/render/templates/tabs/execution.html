@@ -1,0 +1,46 @@
+<div class="execution-tab">
+    <h2>🚀 タスク実行</h2>
+
+    <!-- タスク入力フォーム -->
+    <div class="card">
+        <h3>新しいタスクを実行</h3>
+        <form class="task-form" hx-post="/execute" hx-target="#results" hx-swap="innerHTML">
+            <input type="text"
+                   name="task"
+                   placeholder="タスクを入力してください（例：17が素数かどうか判定してください）"
+                   required
+                   maxlength="10000">
+            <button type="submit">実行開始 🚀</button>
+            <span class="htmx-indicator loading"></span>
+        </form>
+    </div>
+
+    <!-- 実行状態表示 -->
+    <div id="status-display" class="card" style="display: none;">
+        <h3>実行中...</h3>
+        <div id="status-content"></div>
+    </div>
+
+    <!-- 結果表示 -->
+    <div id="results" class="card" style="display: none;">
+        <h3>評価結果</h3>
+        <div id="results-content"></div>
+    </div>
+</div>
+
+<script>
+    // フォーム送信時に実行状態を表示
+    document.addEventListener('htmx:xhr:loadstart', function(evt) {
+        if (evt.detail.xhr.requestTarget.name === 'task') {
+            document.getElementById('status-display').style.display = 'block';
+        }
+    });
+
+    // 結果取得後に実行状態を非表示
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'results') {
+            document.getElementById('status-display').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+        }
+    });
+</script>

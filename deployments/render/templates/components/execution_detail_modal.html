@@ -1,0 +1,96 @@
+<!-- エージェント実行詳細モーダル -->
+<div class="modal-header">
+    <h3>{{ execution.model_provider }}/{{ execution.model_name }}</h3>
+    <button type="button" onclick="document.getElementById('modal').classList.add('hidden')" style="font-size: 1.5rem;">
+        ✕
+    </button>
+</div>
+
+<div class="modal-body">
+    <!-- 評価結果セクション -->
+    <section>
+        <h4>📊 評価結果</h4>
+        <div class="score-display">
+            <span class="score">{{ evaluation.score }}</span>/100
+        </div>
+        <p>{{ evaluation.explanation }}</p>
+    </section>
+
+    <!-- 実行ログセクション -->
+    <section>
+        <h4>📝 実行ログ</h4>
+        <div class="execution-log">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="log-entry log-{{ message.role }}">
+                        <div class="log-header">
+                            <strong>{{ message.role | title }}</strong>
+                            <span class="timestamp">{{ message.timestamp }}</span>
+                        </div>
+                        <div class="log-content">
+                            {{ message.content }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="placeholder">ログがありません</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- メトリクスセクション -->
+    <section>
+        <h4>⚡ パフォーマンスメトリクス</h4>
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 50%; padding: 0.5rem;"><strong>実行時間:</strong></td>
+                <td style="padding: 0.5rem;">{{ "%.2f" | format(execution.duration_seconds or 0) }} 秒</td>
+            </tr>
+            <tr>
+                <td style="width: 50%; padding: 0.5rem;"><strong>トークン数:</strong></td>
+                <td style="padding: 0.5rem;">{{ execution.token_count or "N/A" }}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%; padding: 0.5rem;"><strong>ステータス:</strong></td>
+                <td style="padding: 0.5rem;">
+                    <span style="display: inline-block; padding: 0.25rem 0.75rem; background: #f0f0f0; border-radius: 4px; font-size: 0.85rem;">
+                        {{ execution.status }}
+                    </span>
+                </td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- ツール呼び出しセクション（オプション） -->
+    {% if tool_calls %}
+    <section>
+        <h4>🔧 ツール呼び出し</h4>
+        <div class="tool-tree">
+            {% for call in tool_calls %}
+            <div style="padding: 0.5rem; background: white; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 0.5rem;">
+                <details>
+                    <summary>
+                        <strong>{{ call.tool_name }}</strong>
+                        <span class="call-id">#{{ call.call_id }}</span>
+                    </summary>
+                    <div class="tool-details">
+                        {% if call.args %}
+                        <div class="tool-args">
+                            <strong>引数:</strong>
+                            <pre>{{ call.args }}</pre>
+                        </div>
+                        {% endif %}
+                        {% if call.result %}
+                        <div class="tool-result">
+                            <strong>結果:</strong>
+                            <pre>{{ call.result }}</pre>
+                        </div>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>

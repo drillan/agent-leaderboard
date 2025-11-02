@@ -106,10 +106,114 @@ async def tab_history(request: Request):
 @app.get("/tabs/settings", response_class=HTMLResponse)
 async def tab_settings(request: Request):
     """設定タブ."""
-    return templates.TemplateResponse(
-        "tabs/settings.html",
-        {"request": request}
-    )
+    # 設定フォームを直接生成して返す（より確実）
+    if config is None:
+        form_html = '<p class="error-message">設定が読み込めません</p>'
+    else:
+        # タスクエージェント設定
+        task_agents_html = ''
+        for i, agent in enumerate(config.task_agents, 1):
+            selected_openai = "selected" if agent.provider == "openai" else ""
+            selected_anthropic = "selected" if agent.provider == "anthropic" else ""
+            selected_gemini = "selected" if agent.provider == "gemini" else ""
+            selected_groq = "selected" if agent.provider == "groq" else ""
+            selected_hf = "selected" if agent.provider == "huggingface" else ""
+
+            task_agents_html += f'''
+        <div class="agent-config">
+            <select name="provider_{i}">
+                <option value="openai" {selected_openai}>OpenAI</option>
+                <option value="anthropic" {selected_anthropic}>Anthropic</option>
+                <option value="gemini" {selected_gemini}>Gemini</option>
+                <option value="groq" {selected_groq}>Groq</option>
+                <option value="huggingface" {selected_hf}>Hugging Face</option>
+            </select>
+            <input type="text" name="model_{i}" value="{agent.model}" placeholder="モデル名">
+            <input type="text" name="api_key_env_{i}" value="{agent.api_key_env}" placeholder="API_KEY環境変数名">
+            <button type="button"
+                    hx-delete="/settings/agent/{i}"
+                    hx-target="closest .agent-config"
+                    hx-swap="outerHTML swap:1s">
+                削除
+            </button>
+        </div>
+        '''
+
+        # 評価エージェント設定
+        selected_groq_eval = "selected" if config.evaluation_agent.provider == "groq" else ""
+        selected_openai_eval = "selected" if config.evaluation_agent.provider == "openai" else ""
+        selected_anthropic_eval = "selected" if config.evaluation_agent.provider == "anthropic" else ""
+
+        eval_provider_options = f'''
+        <option value="groq" {selected_groq_eval}>Groq</option>
+        <option value="openai" {selected_openai_eval}>OpenAI</option>
+        <option value="anthropic" {selected_anthropic_eval}>Anthropic</option>
+        '''
+
+        form_html = f'''
+    <div class="settings-tab">
+        <h2>⚙️ 設定</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">エージェント設定と実行パラメータをカスタマイズします。</p>
+
+        <form hx-post="/settings/save"
+              hx-target="#settings-result"
+              hx-swap="innerHTML">
+
+            <section>
+                <h3>タスクエージェント (2-5個必須)</h3>
+                <div id="task-agents">
+                    {task_agents_html}
+                </div>
+                <button type="button"
+                        hx-post="/settings/agent/add"
+                        hx-target="#task-agents"
+                        hx-swap="beforeend">
+                    + エージェント追加
+                </button>
+            </section>
+
+            <section>
+                <h3>評価エージェント</h3>
+                <div class="form-group">
+                    <label>プロバイダー:</label>
+                    <select name="eval_provider">
+                        {eval_provider_options}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>モデル:</label>
+                    <input type="text"
+                           name="eval_model"
+                           value="{config.evaluation_agent.model}">
+                </div>
+                <div class="form-group">
+                    <label>評価プロンプト:</label>
+                    <textarea name="eval_prompt" rows="10">{config.evaluation_agent.prompt}</textarea>
+                </div>
+            </section>
+
+            <section>
+                <h3>実行設定</h3>
+                <div class="form-group">
+                    <label>タイムアウト (秒):</label>
+                    <input type="number"
+                           name="timeout"
+                           value="{config.execution.timeout_seconds}"
+                           min="10"
+                           max="300">
+                </div>
+            </section>
+
+            <button type="submit" style="background: #0066cc; color: white; padding: 0.75rem 2rem; font-size: 1rem; margin-top: 1rem;">
+                💾 保存
+            </button>
+        </form>
+
+        <div id="settings-result"></div>
+    </div>
+    '''
+
+    return HTMLResponse(content=form_html)
 
 
 @app.post("/execute", response_class=HTMLResponse)

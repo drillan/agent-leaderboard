@@ -27,7 +27,7 @@
                     {{ result.explanation[:100] }}...
                 </td>
                 <td>
-                    {% if result.get('execution_id') %}
+                    {% if result.execution_id %}
                     <button type="button"
                             hx-get="/execution/{{ result.execution_id }}/detail"
                             hx-target="#modal .modal-content"

@@ -6,22 +6,11 @@
     <div id="settings-form-container"
          hx-get="/settings/form"
          hx-trigger="load"
-         hx-swap="innerHTML">
-        <p class="placeholder">設定フォームを読み込み中...</p>
+         hx-swap="innerHTML"
+         style="display: block;">
+        <div style="text-align: center; padding: 2rem; color: #666;">
+            <div class="loading" style="margin: 1rem auto; width: 40px; height: 40px; border-width: 4px;"></div>
+            <p>設定フォームを読み込み中...</p>
+        </div>
     </div>
 </div>
-
-<script>
-    // フォーム送信時の成功メッセージハンドリング
-    document.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.detail.target.id === 'settings-result') {
-            // 成功メッセージが表示されたら 2秒後に非表示にする
-            setTimeout(function() {
-                const message = document.querySelector('.success-message');
-                if (message) {
-                    message.style.opacity = '0.5';
-                }
-            }, 2000);
-        }
-    });
-</script>

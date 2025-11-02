@@ -1,0 +1,161 @@
+<!-- ツール呼び出し階層表示 -->
+<div class="tool-tree">
+    <h4>🔧 ツール呼び出し</h4>
+
+    {% if tool_calls and tool_calls | length > 0 %}
+        <div class="tree-container">
+            {% for call in tool_calls %}
+                <div class="tree-item">
+                    <details open>
+                        <summary>
+                            <strong>{{ call.tool_name }}</strong>
+                            <span class="call-id">#{{ call.call_id }}</span>
+                            {% if call.status %}
+                                <span class="status" style="
+                                    display: inline-block;
+                                    padding: 0.2rem 0.5rem;
+                                    border-radius: 3px;
+                                    font-size: 0.75rem;
+                                    margin-left: 0.5rem;
+                                    {% if call.status == 'success' %}
+                                        background: #d4edda;
+                                        color: #155724;
+                                    {% elif call.status == 'error' %}
+                                        background: #f8d7da;
+                                        color: #721c24;
+                                    {% else %}
+                                        background: #e2e3e5;
+                                        color: #383d41;
+                                    {% endif %}
+                                ">
+                                    {{ call.status }}
+                                </span>
+                            {% endif %}
+                        </summary>
+
+                        <div class="tool-details">
+                            {% if call.description %}
+                                <div class="tool-description">
+                                    <p>{{ call.description }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% if call.args %}
+                                <div class="tool-args">
+                                    <strong>パラメータ:</strong>
+                                    <pre>{{ call.args }}</pre>
+                                </div>
+                            {% endif %}
+
+                            {% if call.result %}
+                                <div class="tool-result">
+                                    <strong>結果:</strong>
+                                    <pre>{{ call.result }}</pre>
+                                </div>
+                            {% endif %}
+
+                            {% if call.error %}
+                                <div class="tool-error" style="
+                                    padding: 0.75rem;
+                                    background: #f8d7da;
+                                    color: #721c24;
+                                    border: 1px solid #f5c6cb;
+                                    border-radius: 4px;
+                                    margin-top: 0.5rem;
+                                ">
+                                    <strong>エラー:</strong>
+                                    <pre style="margin: 0.5rem 0 0 0;">{{ call.error }}</pre>
+                                </div>
+                            {% endif %}
+
+                            {% if call.duration %}
+                                <div class="tool-duration" style="
+                                    padding: 0.5rem;
+                                    background: #e7f3ff;
+                                    border-left: 3px solid #0066cc;
+                                    margin-top: 0.5rem;
+                                    font-size: 0.9rem;
+                                ">
+                                    実行時間: <strong>{{ "%.3f"|format(call.duration) }}秒</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="placeholder">ツール呼び出しはありません</p>
+    {% endif %}
+</div>
+
+<style>
+    .tree-container {
+        margin-top: 1rem;
+    }
+
+    .tree-item {
+        margin-bottom: 0.75rem;
+    }
+
+    .tree-item details summary {
+        cursor: pointer;
+        padding: 0.75rem;
+        background: white;
+        border-left: 3px solid #0066cc;
+        border-radius: 4px;
+        user-select: none;
+        transition: all 0.2s ease;
+    }
+
+    .tree-item details summary:hover {
+        background: #f8f9fa;
+    }
+
+    .tree-item details summary strong {
+        color: #0066cc;
+    }
+
+    .tool-details {
+        padding: 1rem;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 0.25rem;
+    }
+
+    .tool-description {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .tool-description p {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .tool-args, .tool-result {
+        margin-bottom: 1rem;
+    }
+
+    .tool-args strong, .tool-result strong {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    pre {
+        background: #f5f5f5;
+        padding: 0.75rem;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        border: 1px solid #ddd;
+    }
+
+    .status {
+        font-weight: 500;
+    }
+</style>

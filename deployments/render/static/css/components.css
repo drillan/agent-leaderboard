@@ -316,6 +316,83 @@ pre {
     max-width: 500px;
 }
 
+/* アラートスタイル（汎用） */
+.alert {
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 4px solid;
+    margin-bottom: 1rem;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left-color: #dc3545;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border-left-color: #28a745;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-left-color: #17a2b8;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border-left-color: #ffc107;
+}
+
+/* ページローダー */
+#page-loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+/* 実行時間バッジ */
+.execution-time-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #e7f3ff;
+    color: #0066cc;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.execution-time-badge.slow {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.execution-time-badge.very-slow {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* プログレッシブディスクロージャー */
+.disclosure {
+    cursor: pointer;
+    user-select: none;
+}
+
+.disclosure summary {
+    outline: none;
+}
+
+.disclosure summary:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .tree {
@@ -342,5 +419,18 @@ pre {
 
     .agent-config select, .agent-config input {
         width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 1rem auto;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    th, td {
+        padding: 0.75rem 0.5rem;
     }
 }

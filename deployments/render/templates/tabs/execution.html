@@ -1,46 +1,115 @@
 <div class="execution-tab">
     <h2>🚀 タスク実行</h2>
 
+    <!-- ヘルプテキスト -->
+    <div class="card" style="background: #d1ecf1; border-left: 4px solid #17a2b8; color: #0c5460;">
+        <p style="margin: 0;">💡 <strong>タスクを入力してください:</strong> 複数のAIエージェントがタスクに取り組み、パフォーマンスを競い合います。</p>
+    </div>
+
     <!-- タスク入力フォーム -->
     <div class="card">
         <h3>新しいタスクを実行</h3>
-        <form class="task-form" hx-post="/execute" hx-target="#results" hx-swap="innerHTML">
+        <form class="task-form"
+              hx-post="/execute"
+              hx-target="#results"
+              hx-swap="innerHTML"
+              hx-on="htmx:xhr:loadstart: htmx.addClass('#status-display', 'htmx-settling')"
+              hx-on="htmx:xhr:loadstart: htmx.removeClass('#status-display', 'hidden')">
+
             <input type="text"
                    name="task"
-                   placeholder="タスクを入力してください（例：17が素数かどうか判定してください）"
+                   placeholder="例: 17が素数かどうか判定してください"
                    required
-                   maxlength="10000">
-            <button type="submit">実行開始 🚀</button>
-            <span class="htmx-indicator loading"></span>
+                   maxlength="10000"
+                   autocomplete="off">
+
+            <button type="submit">
+                実行開始 🚀
+                <span class="htmx-indicator loading"></span>
+            </button>
         </form>
     </div>
 
     <!-- 実行状態表示 -->
-    <div id="status-display" class="card" style="display: none;">
+    <div id="status-display" class="card hidden" style="display: none;">
         <h3>実行中...</h3>
-        <div id="status-content"></div>
+        <div style="text-align: center; padding: 2rem;">
+            <div class="loading" style="margin: 1rem auto; width: 40px; height: 40px; border-width: 4px;"></div>
+            <p style="color: #666; margin-top: 1rem;">複数のエージェントがタスクに取り組んでいます...</p>
+        </div>
+    </div>
+
+    <!-- エラーメッセージ表示エリア -->
+    <div id="error-display" class="card hidden" style="display: none;">
+        <!-- htmxエラーが表示されます -->
     </div>
 
     <!-- 結果表示 -->
     <div id="results" class="card" style="display: none;">
-        <h3>評価結果</h3>
+        <h3>📊 評価結果</h3>
         <div id="results-content"></div>
     </div>
 </div>
 
 <script>
-    // フォーム送信時に実行状態を表示
-    document.addEventListener('htmx:xhr:loadstart', function(evt) {
-        if (evt.detail.xhr.requestTarget.name === 'task') {
-            document.getElementById('status-display').style.display = 'block';
+    // 関連するのDOM要素を取得
+    const statusDisplay = document.getElementById('status-display');
+    const resultsDiv = document.getElementById('results');
+    const errorDisplay = document.getElementById('error-display');
+    const taskForm = document.querySelector('.task-form');
+
+    // フォーム送信時の処理
+    taskForm.addEventListener('htmx:beforeRequest', function(evt) {
+        // ステータスを表示、結果を非表示
+        statusDisplay.style.display = 'block';
+        statusDisplay.classList.remove('hidden');
+        resultsDiv.style.display = 'none';
+        errorDisplay.style.display = 'none';
+        errorDisplay.innerHTML = '';
+    });
+
+    // リクエスト完了時の処理
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'results') {
+            statusDisplay.style.display = 'none';
+            statusDisplay.classList.add('hidden');
+            resultsDiv.style.display = 'block';
+            window.scrollTo(0, resultsDiv.offsetTop - 100);
         }
     });
 
-    // 結果取得後に実行状態を非表示
-    document.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.detail.target.id === 'results') {
-            document.getElementById('status-display').style.display = 'none';
-            document.getElementById('results').style.display = 'block';
-        }
+    // エラーハンドリング
+    document.addEventListener('htmx:responseError', function(evt) {
+        statusDisplay.style.display = 'none';
+        statusDisplay.classList.add('hidden');
+        errorDisplay.style.display = 'block';
+
+        const status = evt.detail.xhr.status;
+        const response = evt.detail.xhr.response;
+
+        let errorHtml = `
+            <div class="alert alert-error">
+                <strong>エラーが発生しました (HTTP ${status})</strong>
+                <p>${response || 'サーバーエラーが発生しました。'}</p>
+            </div>
+        `;
+
+        errorDisplay.innerHTML = errorHtml;
+    });
+
+    // タイムアウトハンドリング
+    document.addEventListener('htmx:timeout', function(evt) {
+        statusDisplay.style.display = 'none';
+        statusDisplay.classList.add('hidden');
+        errorDisplay.style.display = 'block';
+
+        let errorHtml = `
+            <div class="alert alert-error">
+                <strong>リクエストがタイムアウトしました</strong>
+                <p>実行時間が長すぎます。別のタスクを試すか、しばらく待ってからもう一度お試しください。</p>
+            </div>
+        `;
+
+        errorDisplay.innerHTML = errorHtml;
     });
 </script>

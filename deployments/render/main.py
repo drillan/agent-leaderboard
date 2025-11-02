@@ -408,14 +408,23 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
         std_durations = [m['std_duration'] for m in metrics_data]
         counts = [m['execution_count'] for m in metrics_data]
 
+        # 95%信頼区間を計算
+        # 標準誤差 (SE) = 標準偏差 / sqrt(n)
+        # 95%信頼区間 = 1.96 * SE
+        duration_confidence_intervals = [
+            1.96 * (std / (count ** 0.5)) if count > 0 else 0
+            for std, count in zip(std_durations, counts)
+        ]
+
         # 詳細統計のホバーテキスト
         duration_hover_texts = [
             f"平均: {m['avg_duration']:.2f}秒<br>"
+            f"95%信頼区間: ±{duration_confidence_intervals[i]:.2f}秒<br>"
             f"標準偏差: {m['std_duration']:.2f}秒<br>"
             f"最小: {m['min_duration']:.2f}秒<br>"
             f"最大: {m['max_duration']:.2f}秒<br>"
             f"実行回数: {m['execution_count']}"
-            for m in metrics_data
+            for i, m in enumerate(metrics_data)
         ]
 
         duration_fig = go.Figure(data=[
@@ -424,7 +433,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
                 y=durations,
                 error_y={
                     "type": "data",
-                    "array": std_durations,
+                    "array": duration_confidence_intervals,  # 95%信頼区間
                     "visible": True
                 },
                 marker_color='rgb(99, 110, 250)',
@@ -434,7 +443,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
             )
         ])
         duration_fig.update_layout(
-            title="実行時間（平均 ± 標準偏差）",
+            title="実行時間（平均 ± 95%信頼区間）",
             xaxis_title="モデル",
             yaxis_title="時間（秒）",
             template="plotly_white",
@@ -445,12 +454,21 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
         tokens = [m['avg_tokens'] for m in metrics_data]
         std_tokens = [m['std_tokens'] for m in metrics_data]
 
+        # 95%信頼区間を計算
+        # 標準誤差 (SE) = 標準偏差 / sqrt(n)
+        # 95%信頼区間 = 1.96 * SE
+        token_confidence_intervals = [
+            1.96 * (std / (count ** 0.5)) if count > 0 else 0
+            for std, count in zip(std_tokens, counts)
+        ]
+
         # 詳細統計のホバーテキスト
         token_hover_texts = [
             f"平均: {m['avg_tokens']:.0f}トークン<br>"
+            f"95%信頼区間: ±{token_confidence_intervals[i]:.0f}トークン<br>"
             f"標準偏差: {m['std_tokens']:.0f}トークン<br>"
             f"実行回数: {m['execution_count']}"
-            for m in metrics_data
+            for i, m in enumerate(metrics_data)
         ]
 
         token_fig = go.Figure(data=[
@@ -459,7 +477,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
                 y=tokens,
                 error_y={
                     "type": "data",
-                    "array": std_tokens,
+                    "array": token_confidence_intervals,  # 95%信頼区間
                     "visible": True
                 },
                 marker_color='rgb(239, 85, 59)',
@@ -469,7 +487,7 @@ async def get_performance_charts(request: Request, task_id: str = "all"):
             )
         ])
         token_fig.update_layout(
-            title="トークン消費（平均 ± 標準偏差）",
+            title="トークン消費（平均 ± 95%信頼区間）",
             xaxis_title="モデル",
             yaxis_title="トークン数",
             template="plotly_white",

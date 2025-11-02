@@ -16,20 +16,20 @@
             {% for result in results %}
             <tr>
                 <td><strong>{{ loop.index }}</strong></td>
-                <td>{{ result.model }}</td>
+                <td>{{ result['model_provider'] }}/{{ result['model_name'] }}</td>
                 <td>
                     <strong style="font-size: 1.2em; color: #0066cc;">
-                        {{ result.score }}
+                        {{ result['score'] }}
                     </strong>/100
                 </td>
-                <td>{{ "%.2f"|format(result.duration) }}s</td>
+                <td>{{ "%.2f"|format(result['duration_seconds'] or 0) }}s</td>
                 <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    {{ result.explanation[:100] }}...
+                    {{ result['evaluation_text'][:100] if result['evaluation_text'] else 'N/A' }}...
                 </td>
                 <td>
-                    {% if result.execution_id %}
+                    {% if result['execution_id'] %}
                     <button type="button"
-                            hx-get="/execution/{{ result.execution_id }}/detail"
+                            hx-get="/execution/{{ result['execution_id'] }}/detail"
                             hx-target="#modal .modal-content"
                             hx-swap="innerHTML"
                             style="padding: 0.5rem 1rem; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">

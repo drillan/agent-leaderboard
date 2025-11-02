@@ -220,6 +220,7 @@ __marimo__/
 *.duckdb
 *.duckdb.wal
 agent_leaderboard.duckdb*
+shared/database.db
 /plans
 /debug
 /logs

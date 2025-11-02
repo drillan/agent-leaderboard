@@ -24,10 +24,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    // 履歴リストをロード時に取得
-    document.addEventListener('htmx:load', function() {
-        htmx.ajax('GET', '/history/list', '#history-list');
-    });
-</script>

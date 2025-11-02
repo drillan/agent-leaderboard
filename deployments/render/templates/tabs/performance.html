@@ -36,11 +36,3 @@
     </div>
 </div>
 
-<script>
-    // タスク選択フィルターが変更された時、チャートを再読み込み
-    document.getElementById('task-filter').addEventListener('change', function() {
-        const taskId = this.value;
-        htmx.ajax('GET', `/performance/charts?task_id=${taskId}`, '#charts-container');
-        htmx.ajax('GET', `/performance/stats?task_id=${taskId}`, '#stats-container');
-    });
-</script>

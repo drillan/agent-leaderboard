@@ -316,9 +316,9 @@ async def execute_task(request: Request, task: str = Form(...)):
 
         db.close()
 
-        # リーダーボードHTMLを返す
+        # リーダーボード + 実行詳細を返す
         return templates.TemplateResponse(
-            "partials/leaderboard.html",
+            "partials/execution_results.html",
             {
                 "request": request,
                 "results": sorted(evaluated_results, key=lambda x: x["score"], reverse=True),
@@ -821,18 +821,36 @@ async def get_execution_detail(request: Request, execution_id: int):
         # メッセージを解析（JSON形式で保存されている想定）
         import json
         messages = []
+        tool_calls = []
+
         if execution.all_messages_json:
             try:
-                messages = json.loads(execution.all_messages_json)
-            except (json.JSONDecodeError, AttributeError):
+                all_data = json.loads(execution.all_messages_json)
+
+                # メッセージを抽出
+                if isinstance(all_data, dict):
+                    messages = all_data.get("messages", [])
+                elif isinstance(all_data, list):
+                    messages = all_data
+
+                # メッセージからツール呼び出しを抽出
+                if isinstance(all_data, dict):
+                    tool_uses = all_data.get("tool_uses", [])
+                    for i, tool_use in enumerate(tool_uses, 1):
+                        tool_calls.append({
+                            "call_id": i,
+                            "tool_name": tool_use.get("tool_name", "Unknown"),
+                            "args": json.dumps(tool_use.get("args", {}), indent=2, ensure_ascii=False),
+                            "result": json.dumps(tool_use.get("result", {}), indent=2, ensure_ascii=False) if "result" in tool_use else None
+                        })
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.warning(f"Failed to parse all_messages_json: {e}")
                 messages = []
+                tool_calls = []
 
-        # ツール呼び出し階層を抽出（簡易版）
-        tool_calls = []
-        # 実装が必要
-
+        # インライン表示用テンプレートを返す（モーダルではなく）
         return templates.TemplateResponse(
-            "components/execution_detail_modal.html",
+            "components/execution_detail_inline.html",
             {
                 "request": request,
                 "execution": execution,

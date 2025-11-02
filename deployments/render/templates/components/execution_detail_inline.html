@@ -1,0 +1,93 @@
+<!-- エージェント実行詳細 - インライン表示用 -->
+<div class="execution-detail-card" style="padding: 1.5rem; background: white; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e0e0e0;">
+        <h4 style="margin: 0; color: #333;">{{ execution.model_provider }}/{{ execution.model_name }}</h4>
+        <span style="display: inline-block; padding: 0.25rem 0.75rem; background: #f0f0f0; border-radius: 4px; font-size: 0.85rem;">
+            {{ execution.status }}
+        </span>
+    </div>
+
+    <!-- 評価結果 -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+            <h5 style="margin-top: 0; color: #666;">📊 評価結果</h5>
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #0066cc; margin-bottom: 0.5rem;">
+                    {{ evaluation.score }}<span style="font-size: 1.2rem;">/100</span>
+                </div>
+                <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.95rem;">{{ evaluation.explanation }}</p>
+            </div>
+        </div>
+
+        <div>
+            <h5 style="margin-top: 0; color: #666;">⚡ パフォーマンス</h5>
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;"><strong>実行時間:</strong></td>
+                        <td style="padding: 0.5rem 1rem 0.5rem 0; text-align: right; border-bottom: 1px solid #e0e0e0;">{{ "%.2f" | format(execution.duration_seconds or 0) }}秒</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;"><strong>トークン数:</strong></td>
+                        <td style="padding: 0.5rem 1rem 0.5rem 0; text-align: right; border-bottom: 1px solid #e0e0e0;">{{ execution.token_count or "N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0;"><strong>ステータス:</strong></td>
+                        <td style="padding: 0.5rem 1rem 0.5rem 0; text-align: right;">{{ execution.status }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 実行ログ -->
+    <div>
+        <h5 style="margin-top: 0; color: #666;">📝 実行ログ</h5>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 300px; overflow-y: auto;">
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="padding: 1rem; border-bottom: 1px solid #e9ecef; border-left: 3px solid {% if message.role == 'user' %}#0066cc{% elif message.role == 'assistant' %}#28a745{% else %}#ffc107{% endif %}; background: {% if message.role == 'user' %}#f8f9fa{% elif message.role == 'assistant' %}white{% else %}#fffbea{% endif %};">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <strong style="color: #333;">{{ message.role | title }}</strong>
+                            <span style="font-size: 0.85rem; color: #999;">{{ message.timestamp or 'N/A' }}</span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #666; white-space: pre-wrap; word-break: break-word;">{{ message.content }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="padding: 1rem; color: #999; margin: 0; text-align: center;">ログがありません</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ツール呼び出し -->
+    {% if tool_calls and tool_calls|length > 0 %}
+    <div style="margin-top: 2rem;">
+        <h5 style="margin-top: 0; color: #666;">🔧 ツール呼び出し</h5>
+        <div style="background: #f8f9fa; border-radius: 4px; padding: 1rem;">
+            {% for call in tool_calls %}
+            <details style="margin-bottom: 1rem;">
+                <summary style="cursor: pointer; padding: 0.75rem; background: white; border-left: 3px solid #0066cc; border-radius: 4px; user-select: none;">
+                    <strong style="color: #0066cc;">{{ call.tool_name }}</strong>
+                    <span style="display: inline-block; background: #f0f0f0; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; margin-left: 0.5rem; color: #666;">#{{ call.call_id }}</span>
+                </summary>
+                <div style="padding: 1rem; background: white; border: 1px solid #ddd; margin-top: 0.5rem; border-radius: 4px;">
+                    {% if call.args %}
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="display: block; margin-bottom: 0.5rem; color: #333;">引数:</strong>
+                        <pre style="background: #f5f5f5; padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0; font-size: 0.9rem; border: 1px solid #ddd;">{{ call.args }}</pre>
+                    </div>
+                    {% endif %}
+                    {% if call.result %}
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.5rem; color: #333;">結果:</strong>
+                        <pre style="background: #f5f5f5; padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0; font-size: 0.9rem; border: 1px solid #ddd;">{{ call.result }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>

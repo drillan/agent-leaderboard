@@ -1,0 +1,69 @@
+<!-- 実行結果 - リーダーボードと詳細情報をまとめて表示 -->
+
+<!-- リーダーボード -->
+<div class="leaderboard-wrapper" style="margin-bottom: 2rem;">
+    <h3>🏆 リーダーボード</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>モデル</th>
+                <th>スコア</th>
+                <th>実行時間</th>
+                <th>説明</th>
+                <th>詳細</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td><strong>{{ loop.index }}</strong></td>
+                <td>{{ result.model }}</td>
+                <td>
+                    <strong style="font-size: 1.2em; color: #0066cc;">
+                        {{ result.score }}
+                    </strong>/100
+                </td>
+                <td>{{ "%.2f"|format(result.duration) }}s</td>
+                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ result.explanation[:100] }}...
+                </td>
+                <td>
+                    {% if result.execution_id %}
+                    <button type="button"
+                            class="execution-detail-btn"
+                            data-execution-id="{{ result.execution_id }}"
+                            onclick="loadExecutionDetail({{ result.execution_id }})"
+                            style="padding: 0.5rem 1rem; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                        👁️ 詳細
+                    </button>
+                    {% else %}
+                    <span style="color: #999; font-size: 0.9em;">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 実行詳細セクション -->
+<div id="execution-detail-container" style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 4px;">
+    <p style="color: #999; text-align: center; margin: 0;">👆 上のリーダーボードから詳細を選択してください</p>
+</div>
+
+<script>
+/**
+ * 実行詳細を読み込んで表示
+ */
+function loadExecutionDetail(executionId) {
+    const container = document.getElementById('execution-detail-container');
+    if (!container) return;
+
+    // ローディング表示
+    container.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="loading" style="margin: 1rem auto; width: 40px; height: 40px; border-width: 4px;"></div><p>詳細を読み込み中...</p></div>';
+
+    // htmxで詳細を取得
+    htmx.ajax('GET', `/execution/${executionId}/detail`, container);
+}
+</script>
